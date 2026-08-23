@@ -1,0 +1,3913 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WBBSE Class 8 English Master - Interactive Flashcards & Drag-and-Drop</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        },
+                        accent: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    },
+                    animation: {
+                        'bounce-short': 'bounce 0.5s ease-in-out 1',
+                        'shake': 'shake 0.4s ease-in-out',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                    },
+                    keyframes: {
+                        shake: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '20%, 60%': { transform: 'translateX(-6px)' },
+                            '40%, 80%': { transform: 'translateX(6px)' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)' },
+                            '50%': { boxShadow: '0 0 25px rgba(99, 102, 241, 0.8)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts & Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        h1, h2, h3, h4, .font-heading {
+            font-family: 'Outfit', sans-serif;
+        }
+        /* 3D Flashcard Flip Mechanics */
+        .flip-card-container {
+            perspective: 1200px;
+        }
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .flip-card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Drag & Drop Visuals */
+        .draggable-chip {
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease;
+        }
+        .draggable-chip:active {
+            cursor: grabbing;
+            transform: scale(0.96);
+        }
+        .draggable-chip.dragging {
+            opacity: 0.5;
+            transform: scale(1.05) rotate(2deg);
+        }
+        .drop-target-slot {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .drop-target-slot.drag-over {
+            border-color: #6366f1 !important;
+            background-color: rgba(99, 102, 241, 0.2) !important;
+            transform: scale(1.04);
+        }
+        .drop-target-slot.correct-slot {
+            border-color: #22c55e !important;
+            background-color: rgba(34, 197, 94, 0.15) !important;
+            color: #22c55e !important;
+        }
+        .drop-target-slot.wrong-slot {
+            border-color: #ef4444 !important;
+            background-color: rgba(239, 68, 68, 0.15) !important;
+            color: #ef4444 !important;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.5);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(107, 114, 128, 0.8);
+        }
+        /* Canvas confetti overlay */
+        #confettiCanvas {
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+    <canvas id="confettiCanvas"></canvas>
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand Logo & Title -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-emerald-400 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/25">
+                    🎓
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-heading font-extrabold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-500 bg-clip-text text-transparent">
+                            WBBSE Class 8 English
+                        </span>
+                        <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+                            Lessons 10–11 & Grammar
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
+                        Tales of Childhood, Midnight Express, Clauses, Modals, Infinitives, Prefix/Suffix, Voice & Narration Change
+                    </p>
+                </div>
+            </div>
+
+            <!-- Header Controls & Theme Toggle (Top Right Corner) -->
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <!-- Streak Badge -->
+                <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-300 text-xs font-bold shadow-sm" title="Current Correct Answer Streak">
+                    <span class="text-sm">🔥</span>
+                    <span id="streakCounter">0</span>
+                    <span class="hidden md:inline font-medium text-[11px] text-amber-600 dark:text-amber-400">Streak</span>
+                </div>
+
+                <!-- Audio FX Toggle Button -->
+                <button id="audioToggleBtn" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition shadow-sm" title="Toggle Sound FX (Shortcut: M)">
+                    <span id="audioIcon" class="text-base">🔊</span>
+                </button>
+
+                <!-- Stats Overview Button -->
+                <button id="statsModalBtn" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition shadow-sm flex items-center space-x-1" title="View Detailed Score Stats">
+                    <span class="text-base">📊</span>
+                    <span class="text-xs font-semibold hidden md:inline">Stats</span>
+                </button>
+
+                <!-- Theme Toggle Button (Top Right Corner) -->
+                <button id="themeToggleBtn" class="p-2 sm:px-3 sm:py-2 rounded-xl border border-indigo-200 dark:border-indigo-900 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:shadow-md transition flex items-center space-x-1.5" title="Switch Theme (Light / Dark - Shortcut: T)">
+                    <span id="themeIcon" class="text-base">🌙</span>
+                    <span id="themeText" class="text-xs font-bold hidden sm:inline">Dark</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+
+        <!-- Quick Summary & Metrics Bar -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-bold">
+                    📝
+                </div>
+                <div>
+                    <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Questions</div>
+                    <div id="statTotalQuestions" class="text-lg font-bold text-slate-800 dark:text-slate-100">0</div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl font-bold">
+                    ✅
+                </div>
+                <div>
+                    <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Mastered Correct</div>
+                    <div id="statCorrectCount" class="text-lg font-bold text-emerald-600 dark:text-emerald-400">0</div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl font-bold">
+                    🎯
+                </div>
+                <div>
+                    <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Accuracy</div>
+                    <div id="statAccuracy" class="text-lg font-bold text-slate-800 dark:text-slate-100">0%</div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl font-bold">
+                    ⭐
+                </div>
+                <div>
+                    <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Bookmarked</div>
+                    <div id="statBookmarkedCount" class="text-lg font-bold text-purple-600 dark:text-purple-400">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mode Selector & Category Navigation Panel -->
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3.5">
+            <!-- Mode Switcher Tabs -->
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Mode:</span>
+                    <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
+                        <button id="modeAllBtn" class="mode-tab-btn active px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-sm transition">
+                            🌟 All Interactive
+                        </button>
+                        <button id="modeFlashcardBtn" class="mode-tab-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-indigo-500 transition">
+                            🎴 Flashcard MCQs
+                        </button>
+                        <button id="modeDragDropBtn" class="mode-tab-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-indigo-500 transition">
+                            🧩 Drag & Drop Blanks
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Utilities: Shuffle, Review Mistakes, Reset -->
+                <div class="flex items-center space-x-2 text-xs">
+                    <button id="shuffleBtn" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition flex items-center space-x-1" title="Shuffle Questions">
+                        <span>🔀</span>
+                        <span class="hidden sm:inline">Shuffle</span>
+                    </button>
+                    <button id="filterMistakesBtn" class="px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition flex items-center space-x-1" title="Review Incorrectly Answered Questions">
+                        <span>❌</span>
+                        <span class="hidden sm:inline">Review Mistakes (<span id="mistakeBadgeCount">0</span>)</span>
+                    </button>
+                    <button id="resetSessionBtn" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition" title="Reset All Answers & Scores">
+                        🔄 Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Categories Horizontal Filter Scroll -->
+            <div>
+                <div class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                    Filter by Chapter & Grammar Lesson:
+                </div>
+                <div id="categoryFiltersContainer" class="flex items-center space-x-2 overflow-x-auto pb-1.5 text-xs font-medium no-scrollbar">
+                    <!-- Category badges injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Question Play Area -->
+        <div class="flex-1 flex flex-col items-center justify-center max-w-3xl w-full mx-auto">
+
+            <!-- Progress Bar & Indicator -->
+            <div class="w-full mb-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <div class="flex items-center space-x-2">
+                    <span id="questionIndexBadge" class="font-bold text-indigo-600 dark:text-indigo-400">Question 1 of 50</span>
+                    <span id="categoryPillBadge" class="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">Lesson 10</span>
+                    <span id="typeBadge" class="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 text-[10px] font-bold uppercase">MCQ Flashcard</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="bookmarkBtn" class="text-slate-400 hover:text-amber-500 transition text-sm" title="Bookmark this Question">
+                        ⭐
+                    </button>
+                    <button id="readAloudBtn" class="p-1 rounded-md text-slate-400 hover:text-indigo-500 transition text-sm" title="Read Aloud with Voice (Speech)">
+                        🗣️
+                    </button>
+                </div>
+            </div>
+
+            <div class="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden mb-5">
+                <div id="progressBar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 h-full transition-all duration-300 w-0"></div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- 1. FLASHCARD MCQ MODE VIEW CONTAINER           -->
+            <!-- ============================================== -->
+            <div id="flashcardView" class="w-full flip-card-container">
+                <div id="flashcardInner" class="flip-card-inner relative w-full min-h-[430px] rounded-3xl transition-transform shadow-xl">
+
+                    <!-- FLASHCARD FRONT -->
+                    <div class="flip-card-front bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between h-full shadow-lg">
+                        <div>
+                            <!-- Card Header -->
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1 rounded-xl border border-indigo-100 dark:border-indigo-900/50 flex items-center space-x-1">
+                                    <span>💡</span>
+                                    <span id="cardRuleTopic">Grammar Rule / Text Detail</span>
+                                </span>
+                                <span id="difficultyBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">Easy</span>
+                            </div>
+
+                            <!-- Question Prompt -->
+                            <h2 id="cardQuestionText" class="text-lg sm:text-xl font-heading font-semibold text-slate-800 dark:text-slate-100 leading-relaxed mb-6">
+                                Question text will appear here...
+                            </h2>
+
+                            <!-- MCQ Options Grid (4 options) -->
+                            <div id="mcqOptionsGrid" class="grid grid-cols-1 gap-3">
+                                <!-- Option buttons (A, B, C, D) -->
+                            </div>
+                        </div>
+
+                        <!-- Card Front Footer / Action -->
+                        <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <span class="text-[11px] text-slate-400 dark:text-slate-500 hidden sm:inline">
+                                ⌨️ Press keys <kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 font-mono">1</kbd>–<kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 font-mono">4</kbd> or click to choose
+                            </span>
+                            <button id="flipToBackBtn" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-700 dark:text-slate-300 hover:text-indigo-600 text-xs font-bold transition flex items-center space-x-1.5 ml-auto">
+                                <span>🔄 Flip for Answer & Notes</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- FLASHCARD BACK (EXPLANATION & GRAMMATICAL RULE) -->
+                    <div class="flip-card-back absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white border border-indigo-500/30 rounded-3xl p-6 sm:p-8 flex flex-col justify-between h-full shadow-2xl overflow-y-auto">
+                        <div>
+                            <div class="flex items-center justify-between mb-3 border-b border-indigo-500/20 pb-3">
+                                <span class="text-xs font-extrabold uppercase tracking-widest text-indigo-400 flex items-center space-x-1.5">
+                                    <span>📖</span>
+                                    <span>Explanation & Board Curriculum Rule</span>
+                                </span>
+                                <button id="flipToFrontBtn" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold transition">
+                                    ↩️ Flip Back
+                                </button>
+                            </div>
+
+                            <!-- Correct Answer Highlight -->
+                            <div class="mb-4 p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30">
+                                <div class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Correct Answer:</div>
+                                <div id="cardBackCorrectAnswer" class="text-base font-bold text-emerald-300 mt-0.5">
+                                    Option
+                                </div>
+                            </div>
+
+                            <!-- Detailed Explanation -->
+                            <div class="space-y-2 mb-4">
+                                <div class="text-xs font-bold text-slate-300 uppercase tracking-wider">Detailed Analysis:</div>
+                                <p id="cardBackExplanation" class="text-sm text-slate-200 leading-relaxed">
+                                    Explanation details...
+                                </p>
+                            </div>
+
+                            <!-- Grammatical Rule / Concept Tip -->
+                            <div class="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-200 space-y-1">
+                                <span class="font-bold text-indigo-300">💡 Exam Tip & Rule:</span>
+                                <p id="cardBackRuleNotes">Remember the core grammatical rule or textbook context.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-indigo-500/20 flex items-center justify-between">
+                            <span class="text-xs text-slate-400">Class 8 WBBSE Syllabus Standard</span>
+                            <button id="cardBackNextBtn" class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-bold shadow-lg shadow-indigo-500/30 hover:opacity-95 transition">
+                                Next Card ➔
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- 2. DRAG AND DROP FILL IN THE BLANKS CONTAINER  -->
+            <!-- ============================================== -->
+            <div id="dragDropView" class="w-full hidden bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl min-h-[430px] flex flex-col justify-between">
+                <div>
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 px-3 py-1 rounded-xl border border-purple-100 dark:border-purple-900/50 flex items-center space-x-1">
+                            <span>🧩</span>
+                            <span>Drag & Drop Fill in the Blank</span>
+                        </span>
+                        <span class="text-xs font-medium text-slate-400">Drag a block or tap to place</span>
+                    </div>
+
+                    <!-- Sentence with Drop Slot -->
+                    <div class="my-6 p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80">
+                        <div class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Complete the Sentence:</div>
+                        <div id="dragDropSentence" class="text-lg sm:text-xl font-heading font-medium text-slate-800 dark:text-slate-100 leading-loose flex flex-wrap items-center gap-2">
+                            <!-- Sentence with Drop Slot -->
+                        </div>
+                    </div>
+
+                    <!-- 4 Draggable Word Block Chips -->
+                    <div>
+                        <div class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                            <span>Available Word Blocks (4 Options):</span>
+                            <span class="text-[11px] font-normal text-indigo-500 dark:text-indigo-400">Drag or Tap on a block</span>
+                        </div>
+                        <div id="draggableChipsContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <!-- 4 draggable blocks -->
+                        </div>
+                    </div>
+
+                    <!-- Instant Feedback Box -->
+                    <div id="dragDropFeedbackBox" class="mt-5 hidden p-4 rounded-2xl border transition-all">
+                        <div class="flex items-start space-x-3">
+                            <span id="ddFeedbackIcon" class="text-2xl">🎉</span>
+                            <div>
+                                <h4 id="ddFeedbackTitle" class="text-sm font-bold">Awesome!</h4>
+                                <p id="ddFeedbackText" class="text-xs mt-0.5 text-slate-600 dark:text-slate-300"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Drag & Drop Controls -->
+                <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <button id="ddResetBtn" class="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition flex items-center space-x-1">
+                        <span>🔄 Clear Slot</span>
+                    </button>
+
+                    <div class="flex items-center space-x-2">
+                        <button id="ddPrevBtn" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition">
+                            ◀ Prev
+                        </button>
+                        <button id="ddNextBtn" class="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-500/25 transition flex items-center space-x-1">
+                            <span>Next Blank ▶</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Question Navigation Controls Below Card -->
+            <div id="globalNavControls" class="w-full mt-5 flex items-center justify-between">
+                <button id="prevQuestionBtn" class="px-4 sm:px-5 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-bold shadow-sm transition flex items-center space-x-2">
+                    <span>⬅️</span>
+                    <span>Previous</span>
+                </button>
+
+                <div class="flex items-center space-x-1.5 text-xs text-slate-400">
+                    <span class="hidden sm:inline">Navigate with</span>
+                    <kbd class="px-1.5 py-0.5 bg-white dark:bg-slate-900 rounded border border-slate-300 dark:border-slate-700 font-mono text-[11px]">←</kbd>
+                    <kbd class="px-1.5 py-0.5 bg-white dark:bg-slate-900 rounded border border-slate-300 dark:border-slate-700 font-mono text-[11px]">→</kbd>
+                    <span class="hidden sm:inline">keys</span>
+                </div>
+
+                <button id="nextQuestionBtn" class="px-5 sm:px-6 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition flex items-center space-x-2">
+                    <span>Next Question</span>
+                    <span>➡️</span>
+                </button>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Detailed Stats & Results Modal -->
+    <div id="statsModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-900 max-w-md w-full rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-7 shadow-2xl animate-bounce-short">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">📊</span>
+                    <h3 class="font-heading font-bold text-lg text-slate-800 dark:text-slate-100">Performance Report</h3>
+                </div>
+                <button id="closeStatsModalBtn" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+                    ✕
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-center">
+                        <div class="text-xs text-slate-400">Total Answered</div>
+                        <div id="modalTotalAnswered" class="text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">0</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 text-center">
+                        <div class="text-xs text-emerald-600 dark:text-emerald-400">Correct Accuracy</div>
+                        <div id="modalAccuracy" class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">0%</div>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Breakdown by Topic:</div>
+                    <div id="categoryStatsBreakdown" class="max-h-48 overflow-y-auto space-y-2 pr-1 text-xs">
+                        <!-- Topic accuracy rows -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                <button id="modalCloseBtn2" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md hover:bg-indigo-500 transition">
+                    Continue Learning 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Web Audio Synthesizer, Question Bank, & Drag-and-Drop Logic -->
+    <script>
+    /**
+     * WBBSE CLASS 8 ENGLISH MASTER ENGINE
+     * Self-contained Web Audio API Sound Effects + SpeechSynthesis + HTML5 Drag & Drop
+     */
+
+    // 1. QUESTION DATABASE
+    const QUESTIONS_DATA = [
+      // LESSON 10: TALES OF CHILDHOOD
+      {
+        "id": "tc-mcq-1",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Who is the author of 'Tales of Childhood'?",
+        "options": ["Alfred Noyes", "Roald Dahl", "Sugata Bose", "John Keats"],
+        "answer": 1,
+        "explanation": "'Tales of Childhood' is an autobiographical work written by the celebrated British novelist Roald Dahl (1916–1990).",
+        "rule": "Author Knowledge & Textbook Introduction",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-mcq-2",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "From which autobiographical book by Roald Dahl is this excerpt taken?",
+        "options": ["Boy: Tales of Childhood", "Matilda", "Charlie and the Chocolate Factory", "Going Solo"],
+        "answer": 0,
+        "explanation": "The text is an excerpt taken from Roald Dahl's acclaimed autobiography titled 'Boy: Tales of Childhood' published in 1984.",
+        "rule": "Literary Background",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-mcq-3",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "What was the occupation of the narrator's grandfather?",
+        "options": ["A shipbroker in Cardiff", "A fairly prosperous merchant in Sarpsborg", "A school headmaster", "A doctor"],
+        "answer": 1,
+        "explanation": "The narrator's grandfather was a fairly prosperous merchant who owned a store in Sarpsborg and traded in everything from cheese to chicken-wire.",
+        "rule": "Textual Opening Detail",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-mcq-4",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "In which Norwegian town was the narrator's grandfather's store located?",
+        "options": ["Oslo", "Bergen", "Sarpsborg", "Radyr"],
+        "answer": 2,
+        "explanation": "The grandfather lived and ran his trading store in Sarpsborg, a small town in south-eastern Norway.",
+        "rule": "Geographical Reference",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-mcq-5",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "At what age did the narrator's father, Harold Dahl, lose his arm?",
+        "options": ["Ten", "Twelve", "Fourteen", "Twenty"],
+        "answer": 2,
+        "explanation": "Harold Dahl fractured his arm falling from the roof of a wood-shed at age fourteen, which had to be amputated due to negligent medical treatment.",
+        "rule": "Biographical Detail",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-mcq-6",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Why had Harold Dahl's arm been amputated after the accident?",
+        "options": ["The wound developed gangrene naturally", "An intoxicated doctor mistook the fractured bone for a dislocated shoulder and damaged it further", "No doctor was available in the town", "He refused to undergo treatment"],
+        "answer": 1,
+        "explanation": "The local doctor was drunk and mistook the fractured arm for a dislocated shoulder, violently pulling and twisting it until the blood vessels were irreparably damaged.",
+        "rule": "Textual Fact / Comprehension",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "tc-mcq-7",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "What is the definition of a 'shipbroker' according to the text?",
+        "options": ["A builder of wooden naval ships", "A captain who sails cargo vessels", "A person who supplies a ship with everything it needs when it arrives in port", "An officer who collects harbor taxes"],
+        "answer": 2,
+        "explanation": "A shipbroker is a person who supplies a ship with fuel, ropes, food, and every necessity when it docks in port.",
+        "rule": "Vocabulary & Profession Definition",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-mcq-8",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "With whom did Harold Dahl establish his shipbroking firm in Cardiff?",
+        "options": ["His brother Oscar", "A fellow Norwegian named Aadnesen", "His wife Sofie", "Mrs. Corfield"],
+        "answer": 1,
+        "explanation": "Harold Dahl formed a partnership with a fellow Norwegian named Aadnesen and founded the firm 'Aadnesen & Dahl'.",
+        "rule": "Textual Character / Business Detail",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-mcq-9",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Why did Harold Dahl and Aadnesen choose Cardiff in South Wales for their business?",
+        "options": ["Cardiff was close to Norway", "Cardiff was the greatest coal-exporting port in the world at that time", "They were granted free warehouse space", "English language schools were located there"],
+        "answer": 1,
+        "explanation": "At the turn of the century, Cardiff was the greatest coal-exporting port in the entire world, creating immense demand for shipbroking services.",
+        "rule": "Historical Context",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "tc-mcq-10",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Whom did Harold Dahl marry in 1911 during his visit to Norway?",
+        "options": ["Marie from Paris", "Sofie Magdalene Hesselberg", "Miss Tucker", "Ellen"],
+        "answer": 1,
+        "explanation": "In 1911, Harold Dahl married Sofie Magdalene Hesselberg, the narrator's mother.",
+        "rule": "Family History",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-mcq-11",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Where did the Dahl family move in 1918?",
+        "options": ["A small flat in Cardiff", "An imposing country mansion in the village of Radyr", "A farmhouse in Sarpsborg", "A cottage in Llandaff"],
+        "answer": 1,
+        "explanation": "In 1918, the family moved to an imposing country mansion beside the village of Radyr, about six miles north of Cardiff.",
+        "rule": "Chronology of Family Residence",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-mcq-12",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Which animals were kept on the farm surrounding the Radyr country mansion?",
+        "options": ["Lions, tigers, and bears", "Cows, sheep, horses, pigs, and chickens", "Only guard dogs and racing horses", "Camels and goats"],
+        "answer": 1,
+        "explanation": "The farm surrounding the Radyr mansion had acres of woodland, pastures with cows, sheep, horses, pigs, and plenty of chickens.",
+        "rule": "Textual Setting Detail",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-mcq-13",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Which tragic event occurred in the Dahl family in 1920 when Roald was three years old?",
+        "options": ["Their mansion caught fire", "His seven-year-old sister Astri died of appendicitis", "Harold Dahl went bankrupt", "The family lost their shipbroking firm"],
+        "answer": 1,
+        "explanation": "In 1920, Roald's eldest sister Astri died of acute appendicitis at the age of seven.",
+        "rule": "Major Tragic Turning Point",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-mcq-14",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Who was 'far and away' Harold Dahl's favourite child?",
+        "options": ["Roald", "Astri", "Ellen", "Louis"],
+        "answer": 1,
+        "explanation": "The text explicitly states: 'Astri was far and away my father's favourite.'",
+        "rule": "Direct Textual Quote",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-mcq-15",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Why did Harold Dahl pass away shortly after Astri's death?",
+        "options": ["He had an incurable cancer", "He was so grief-stricken that he refused to battle pneumonia", "He met with a train accident", "He was poisoned"],
+        "answer": 1,
+        "explanation": "Harold Dahl was so heartbroken over Astri's death that when he contracted pneumonia a month later, he had no will to fight for his life.",
+        "rule": "Textual Comprehension",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-mcq-16",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "How many children was Roald's mother left to take care of after Harold's death?",
+        "options": ["Two", "Three", "Five (with a sixth expected)", "Eight"],
+        "answer": 2,
+        "explanation": "Sofie Magdalene was left a widow with five children to care for, and was expecting her sixth child shortly.",
+        "rule": "Textual Fact",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "tc-mcq-17",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Why did Roald's mother refuse to return to Norway after her husband's death?",
+        "options": ["She had no travel documents", "Her husband had firmly believed English schools were the best in the world and she wanted to educate the children there", "She disliked her relatives in Norway", "The borders were closed"],
+        "answer": 1,
+        "explanation": "Harold Dahl had always insisted that English schools were superior to all others, and his widow was determined to fulfill his dream.",
+        "rule": "Character Motivation",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-mcq-18",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Where did the mother move the family after selling the large Radyr estate?",
+        "options": ["To a smaller house in Llandaff (Cumberland Lodge)", "To London", "To Cardiff Docks", "To Swansea"],
+        "answer": 0,
+        "explanation": "She sold the grand estate in Radyr and moved the family to Cumberland Lodge in Llandaff, a smaller and more manageable home.",
+        "rule": "Chronology of Moves",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-mcq-19",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "What was the name of the kindergarten school Roald Dahl first attended?",
+        "options": ["Llandaff Cathedral School", "Elmtree House", "Cardiff Academy", "St. Peter's School"],
+        "answer": 1,
+        "explanation": "Roald Dahl first attended Elmtree House, a local kindergarten situated in Llandaff.",
+        "rule": "Early Education Detail",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-mcq-20",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Who ran the kindergarten named Elmtree House?",
+        "options": ["Two Norwegian governesses", "Two sisters: Mrs. Corfield and Miss Tucker", "A French tutor", "The local church parish"],
+        "answer": 1,
+        "explanation": "Elmtree House was run by two sisters named Mrs. Corfield and Miss Tucker.",
+        "rule": "Textual Characters",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-mcq-21",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "What is young Roald Dahl's most vivid memory of his time at Elmtree House?",
+        "options": ["The arithmetic exams", "Riding his tricycle at enormous speed down the hill on the pavement with his sister", "Playing football on the school field", "Singing choir songs"],
+        "answer": 1,
+        "explanation": "Dahl recalls that his clearest memory was racing on his tricycle with his sister, leaning round corners on two wheels at high speed.",
+        "rule": "Childhood Recollection",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-mcq-22",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "What does the word 'imposing' mean in 'an imposing country mansion'?",
+        "options": ["Small and modest", "Grand, impressive, and commanding admiration", "Dilapidated and broken", "Crowded and noisy"],
+        "answer": 1,
+        "explanation": "'Imposing' means grand, impressive, stately, or commanding respect and attention.",
+        "rule": "Vocabulary in Context",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-mcq-23",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "How did Harold Dahl handle everyday life with only one arm?",
+        "options": ["He hired an assistant for every small task", "He refused to be handicapped and could cut his own meat and tie his laces with great dexterity", "He stopped participating in family activities", "He complained constantly about his disability"],
+        "answer": 1,
+        "explanation": "Harold Dahl never allowed his missing arm to handicap him; he even carved a special wooden cutting board and tied his shoelaces with one hand.",
+        "rule": "Character Trait Analysis",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "tc-mcq-24",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "What was the name of Harold Dahl's first wife, who passed away leaving two children?",
+        "options": ["Sofie Magdalene", "Marie", "Astri", "Ellen"],
+        "answer": 1,
+        "explanation": "Harold's first wife was a young Frenchwoman named Marie, who died after having two children, Ellen and Louis.",
+        "rule": "Biographical Detail",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "tc-mcq-25",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "mcq",
+        "question": "Which quality of Roald Dahl's mother is most highlighted in the text after her husband's demise?",
+        "options": ["Her despair and helplessness", "Her immense courage, selflessness, and determination to educate her children", "Her desire to become a businesswoman", "Her indifference to schooling"],
+        "answer": 1,
+        "explanation": "The text praises the mother's incredible courage and determination to stay in a foreign country and raise all the children single-handedly.",
+        "rule": "Thematic Analysis",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-dd-1",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "drag_drop",
+        "sentence": "The narrator's grandfather was a fairly {BLANK} merchant who owned a store in Sarpsborg.",
+        "options": ["prosperous", "negligent", "humble", "destitute"],
+        "answer": "prosperous",
+        "explanation": "Textual quote: 'My grandfather was a fairly prosperous merchant who owned a store in Sarpsborg...'",
+        "rule": "Vocabulary & Reading Comprehension",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-dd-2",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "drag_drop",
+        "sentence": "A {BLANK} supplies a ship with everything it needs when it arrives in port.",
+        "options": ["shipbroker", "blacksmith", "carpenter", "lighthouse-keeper"],
+        "answer": "shipbroker",
+        "explanation": "A shipbroker arranges fuel, ropes, food, and port services for docking vessels.",
+        "rule": "Word Meaning & Concept",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-dd-3",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "drag_drop",
+        "sentence": "In 1918, the Dahl family moved to an {BLANK} country mansion in Radyr.",
+        "options": ["imposing", "insignificant", "ordinary", "ugly"],
+        "answer": "imposing",
+        "explanation": "The text describes the grand house in Radyr as an 'imposing country mansion'.",
+        "rule": "Adjective in Context",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-dd-4",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "drag_drop",
+        "sentence": "Astri was far and away my father's {BLANK} child.",
+        "options": ["favourite", "youngest", "eldest", "naughtiest"],
+        "answer": "favourite",
+        "explanation": "Harold Dahl adored Astri, and she was 'far and away' his favourite child.",
+        "rule": "Textual Fact",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-dd-5",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "drag_drop",
+        "sentence": "Astri tragically died of acute {BLANK} at the tender age of seven.",
+        "options": ["appendicitis", "pneumonia", "malaria", "typhoid"],
+        "answer": "appendicitis",
+        "explanation": "Astri died of appendicitis in 1920 when medical treatments for it were not yet widespread.",
+        "rule": "Plot Fact",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-dd-6",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "drag_drop",
+        "sentence": "Harold Dahl contracted {BLANK} and died shortly after Astri's passing.",
+        "options": ["pneumonia", "influenza", "bronchitis", "cholera"],
+        "answer": "pneumonia",
+        "explanation": "Harold Dahl caught pneumonia a month after Astri's demise and died of a broken heart.",
+        "rule": "Biographical Detail",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-dd-7",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "drag_drop",
+        "sentence": "Roald Dahl first attended a kindergarten school named {BLANK} House.",
+        "options": ["Elmtree", "Oakridge", "Pinecrest", "Greenwood"],
+        "answer": "Elmtree",
+        "explanation": "The kindergarten run by Mrs. Corfield and Miss Tucker was called 'Elmtree House'.",
+        "rule": "Textual Detail",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-dd-8",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "drag_drop",
+        "sentence": "Young Roald raced at breakneck speed on his {BLANK} with his sister.",
+        "options": ["tricycle", "bicycle", "scooter", "roller-skates"],
+        "answer": "tricycle",
+        "explanation": "The author vividly recalls racing on his tricycle on the pavement outside.",
+        "rule": "Childhood Recollection",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "tc-dd-9",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "drag_drop",
+        "sentence": "After selling the estate in Radyr, the family moved to {BLANK}.",
+        "options": ["Llandaff", "Sarpsborg", "Cardiff", "Swansea"],
+        "answer": "Llandaff",
+        "explanation": "The family relocated to Cumberland Lodge in Llandaff.",
+        "rule": "Location Sequence",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "tc-dd-10",
+        "category": "Lesson 10: Tales of Childhood",
+        "type": "drag_drop",
+        "sentence": "Harold Dahl firmly believed that {BLANK} schools were the best in the world.",
+        "options": ["English", "Norwegian", "French", "German"],
+        "answer": "English",
+        "explanation": "Harold Dahl always praised English schools as the finest in the world.",
+        "rule": "Parental Conviction",
+        "difficulty": "Easy"
+      },
+
+      // LESSON 11: MIDNIGHT EXPRESS
+      {
+        "id": "me-mcq-1",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "Who is the author of the eerie story 'Midnight Express'?",
+        "options": ["Roald Dahl", "Alfred Noyes", "R. K. Narayan", "Oscar Wilde"],
+        "answer": 1,
+        "explanation": "'Midnight Express' was written by Alfred Noyes (1880–1958), a celebrated English poet, playwright, and fiction writer.",
+        "rule": "Author Knowledge",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-mcq-2",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "Who is the central character of 'Midnight Express'?",
+        "options": ["Harold", "Mortimer", "Aadnesen", "Corfield"],
+        "answer": 1,
+        "explanation": "Mortimer is the central protagonist whose childhood fear becomes a chilling adult reality.",
+        "rule": "Main Character Identification",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-mcq-3",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "At what age did Mortimer find the mysterious book in his father's library?",
+        "options": ["Ten years old", "Twelve years old", "Fourteen years old", "Sixteen years old"],
+        "answer": 1,
+        "explanation": "Mortimer was twelve years old when he discovered the battered, red-leather-bound book in his father's library.",
+        "rule": "Textual Setting & Age",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-mcq-4",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "How is the mysterious book described in the opening section?",
+        "options": ["A brand new golden notebook", "A battered, red-leather-bound book", "A blue cloth journal", "A parchment manuscript"],
+        "answer": 1,
+        "explanation": "The text describes it as a 'battered, red-leather-bound book' that Mortimer discovered in his father's library.",
+        "rule": "Descriptive Detail",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-mcq-5",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "On which page of the book was the terrifying illustration located?",
+        "options": ["Page twelve", "Page twenty-five", "Page fifty", "Page seventy-five"],
+        "answer": 2,
+        "explanation": "The frightening illustration that haunted Mortimer was on page fifty.",
+        "rule": "Key Plot Detail",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-mcq-6",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "What did the illustration on page fifty depict?",
+        "options": [
+            "A train wreck on a high bridge",
+            "A solitary man standing under a dull yellow lamp on an empty railway platform, facing a tunnel",
+            "A ghost haunting a graveyard",
+            "A ship caught in a stormy sea"
+        ],
+        "answer": 1,
+        "explanation": "The illustration showed an empty railway platform at night, a solitary man standing beneath a dull yellow lamp with his back to the viewer, facing into the dark mouth of a tunnel.",
+        "rule": "Core Story Imagery",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "me-mcq-7",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "Which two sounds did young Mortimer hear while reading the book in his bedroom?",
+        "options": [
+            "The ticking of the hall clock and the roar of the sea",
+            "The howling of wolves and whistling wind",
+            "The chime of church bells and galloping horses",
+            "The whispering of ghosts and falling rain"
+        ],
+        "answer": 0,
+        "explanation": "The text mentions that as Mortimer read, he could hear the clock ticking in the hall below and the roar of the sea outside.",
+        "rule": "Auditory Setting in Text",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "me-mcq-8",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "Why did young Mortimer never read beyond page fifty of the story?",
+        "options": [
+            "The remaining pages were missing",
+            "The eerie illustration filled him with such dread that he closed the book",
+            "His father took the book away",
+            "The language was too difficult"
+        ],
+        "answer": 1,
+        "explanation": "The illustration on page fifty frightened Mortimer so deeply that he never dared to read any further.",
+        "rule": "Character Psychology",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-mcq-9",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "Years later, where was adult Mortimer waiting for a train late at night?",
+        "options": ["Cardiff Central Station", "A deserted, solitary railway junction", "London King's Cross", "Paddington Station"],
+        "answer": 1,
+        "explanation": "As a young man, Mortimer found himself waiting on a dark, deserted railway junction on a cold autumn night.",
+        "rule": "Setting Transition",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-mcq-10",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "What kind of light was cast by the solitary railway lamp on the platform?",
+        "options": ["Bright neon white", "Dull yellow", "Vivid crimson", "Pale emerald green"],
+        "answer": 1,
+        "explanation": "The platform was lit by a 'dull yellow' lamp, exactly as illustrated in the childhood book.",
+        "rule": "Visual Parallel",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-mcq-11",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "What horrifying shock did Mortimer experience when he walked up to the figure under the lamp?",
+        "options": [
+            "The figure had no face at all",
+            "He was staring into his own face",
+            "The figure was a skeleton in an overcoat",
+            "The figure disappeared into thin air"
+        ],
+        "answer": 1,
+        "explanation": "When Mortimer approached the figure and looked into its face, he recoiled in horror to find he was staring at his own face.",
+        "rule": "Climactic Twist",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "me-mcq-12",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "In his wild panic after the platform encounter, where did Mortimer run?",
+        "options": [
+            "Into the railway tunnel",
+            "Out of the station into the dark night until he found an isolated cottage",
+            "Onto the approaching midnight train",
+            "Into the station master's office"
+        ],
+        "answer": 1,
+        "explanation": "Mortimer fled from the platform into the dark and came upon an isolated cottage with a faint light glowing in its window.",
+        "rule": "Plot Progression",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "me-mcq-13",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "What did Mortimer discover on the wooden table inside the cottage?",
+        "options": [
+            "A bowl of steaming soup and a key",
+            "The same battered red-leather-bound book, opened to page fifty",
+            "A letter warning him to leave",
+            "A loaded pistol"
+        ],
+        "answer": 1,
+        "explanation": "On the wooden table beneath the candle lay the exact battered red-leather-bound book from his childhood, open at page fifty.",
+        "rule": "Cyclical Mystery Climax",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "me-mcq-14",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "Who was sitting in the armchair in the shadowy cottage room?",
+        "options": [
+            "An old blind watchman",
+            "A shadowy man whose face was turned away",
+            "Mortimer's father",
+            "A railway engine driver"
+        ],
+        "answer": 1,
+        "explanation": "A shadowy figure sat in the armchair in the corner of the room, adding to the terrifying atmosphere.",
+        "rule": "Story Resolution Detail",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "me-mcq-15",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "What is the primary literary genre of Alfred Noyes' 'Midnight Express'?",
+        "options": ["Historical biography", "Supernatural psychological horror & suspense", "Science fiction comedy", "Pastoral lyric"],
+        "answer": 1,
+        "explanation": "'Midnight Express' is a classic supernatural suspense and psychological horror story exploring recurring nightmares and time loops.",
+        "rule": "Literary Genre",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-mcq-16",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "What is the meaning of 'battered' as used in 'battered, red-leather-bound book'?",
+        "options": ["Polished and new", "Worn out and damaged by long use", "Covered with gold leaf", "Thickly padded"],
+        "answer": 1,
+        "explanation": "'Battered' means scuffed, damaged, or worn out from years of heavy handling.",
+        "rule": "Vocabulary Analysis",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-mcq-17",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "What does the 'black mouth of the tunnel' symbolize in the story?",
+        "options": ["Safety and warmth", "The unknown, doom, and inescapable fear", "A path back home", "Industrial progress"],
+        "answer": 1,
+        "explanation": "The gaping black mouth of the tunnel symbolizes the eerie unknown, psychological dread, and inevitable doom.",
+        "rule": "Symbolism & Literary Meaning",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "me-mcq-18",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "How does the author create suspense during Mortimer's wait at the junction?",
+        "options": [
+            "By describing a crowded festival",
+            "By contrasting silence, damp mist, a dull yellow lamp, and solitary shadows",
+            "By introducing humorous dialogue",
+            "By setting the scene in bright midday sunshine"
+        ],
+        "answer": 1,
+        "explanation": "Suspense is crafted through sensory imagery of isolation: damp cold mist, silence, dull flickering light, and a deserted platform.",
+        "rule": "Atmospheric Technique",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "me-mcq-19",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "What is the uncanny circular structure in 'Midnight Express'?",
+        "options": [
+            "Mortimer travels around the globe and returns home",
+            "The childhood illustration Mortimer feared becomes the exact reality he lives through as an adult",
+            "The story begins and ends with his father's birth",
+            "The train goes in a circle around the mountains"
+        ],
+        "answer": 1,
+        "explanation": "The story follows a circular time-loop motif where the childhood book's illustration manifests into the adult's horrifying reality.",
+        "rule": "Plot Structure Analysis",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "me-mcq-20",
+        "category": "Lesson 11: Midnight Express",
+        "type": "mcq",
+        "question": "What physical reaction did Mortimer have upon recognizing his own face on the platform figure?",
+        "options": ["He laughed loudly", "He shuddered in icy terror and ran blindly into the night", "He calmly shook hands with the figure", "He took a photograph"],
+        "answer": 1,
+        "explanation": "Overwhelmed by icy terror, Mortimer shuddered, turned around in total panic, and fled blindly into the darkness.",
+        "rule": "Character Reaction",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "me-dd-1",
+        "category": "Lesson 11: Midnight Express",
+        "type": "drag_drop",
+        "sentence": "Mortimer found a battered, {BLANK}-bound book in his father's library.",
+        "options": ["red-leather", "blue-cloth", "green-paper", "black-velvet"],
+        "answer": "red-leather",
+        "explanation": "The text states the book was a 'battered, red-leather-bound book'.",
+        "rule": "Textual Fact",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-dd-2",
+        "category": "Lesson 11: Midnight Express",
+        "type": "drag_drop",
+        "sentence": "The frightening illustration was located on page {BLANK} of the story.",
+        "options": ["fifty", "twenty", "thirty", "forty"],
+        "answer": "fifty",
+        "explanation": "Page fifty held the illustration that filled Mortimer with dread.",
+        "rule": "Textual Fact",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-dd-3",
+        "category": "Lesson 11: Midnight Express",
+        "type": "drag_drop",
+        "sentence": "A solitary figure stood under the {BLANK} lamp on the empty railway platform.",
+        "options": ["yellow", "white", "purple", "neon"],
+        "answer": "yellow",
+        "explanation": "The lamp cast a dull yellow light over the platform.",
+        "rule": "Descriptive Detail",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-dd-4",
+        "category": "Lesson 11: Midnight Express",
+        "type": "drag_drop",
+        "sentence": "Mortimer looked into the figure's face and realized he was staring at {BLANK}.",
+        "options": ["himself", "his father", "a stranger", "a ghost"],
+        "answer": "himself",
+        "explanation": "The shocking climax occurs when Mortimer sees his own face staring back.",
+        "rule": "Story Twist",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "me-dd-5",
+        "category": "Lesson 11: Midnight Express",
+        "type": "drag_drop",
+        "sentence": "Outside the bedroom, Mortimer could hear the roar of the {BLANK}.",
+        "options": ["sea", "wind", "train", "storm"],
+        "answer": "sea",
+        "explanation": "Young Mortimer heard the clock ticking and the roar of the sea.",
+        "rule": "Auditory Imagery",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-dd-6",
+        "category": "Lesson 11: Midnight Express",
+        "type": "drag_drop",
+        "sentence": "Mortimer was waiting at a deserted railway {BLANK} on a cold autumn night.",
+        "options": ["junction", "bridge", "harbour", "tunnel"],
+        "answer": "junction",
+        "explanation": "The setting is a deserted railway junction.",
+        "rule": "Setting Detail",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-dd-7",
+        "category": "Lesson 11: Midnight Express",
+        "type": "drag_drop",
+        "sentence": "The figure was staring directly into the black mouth of a {BLANK}.",
+        "options": ["tunnel", "cave", "well", "mine"],
+        "answer": "tunnel",
+        "explanation": "The figure faced into the yawning black mouth of the railway tunnel.",
+        "rule": "Visual Imagery",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-dd-8",
+        "category": "Lesson 11: Midnight Express",
+        "type": "drag_drop",
+        "sentence": "Mortimer escaped the platform and sought refuge inside a lonely {BLANK}.",
+        "options": ["cottage", "palace", "factory", "church"],
+        "answer": "cottage",
+        "explanation": "Mortimer ran from the junction to an isolated cottage.",
+        "rule": "Plot Sequence",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-dd-9",
+        "category": "Lesson 11: Midnight Express",
+        "type": "drag_drop",
+        "sentence": "On the wooden table lay the red-leather book open at page {BLANK}.",
+        "options": ["fifty", "sixty", "twenty", "twelve"],
+        "answer": "fifty",
+        "explanation": "The book on the table was opened precisely to page fifty.",
+        "rule": "Textual Climax",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "me-dd-10",
+        "category": "Lesson 11: Midnight Express",
+        "type": "drag_drop",
+        "sentence": "The overall mood created by Alfred Noyes in this story is full of {BLANK}.",
+        "options": ["suspense", "laughter", "cheerfulness", "triumph"],
+        "answer": "suspense",
+        "explanation": "The narrative is steeped in eerie psychological suspense.",
+        "rule": "Atmospheric Understanding",
+        "difficulty": "Easy"
+      },
+
+      // GRAMMAR: CLAUSE
+      {
+        "id": "g-cl-1",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "Identify the clause type of the bracketed clause: 'I know [that he is honest].'",
+        "options": ["Noun Clause", "Adjective Clause", "Adverbial Clause of Time", "Coordinate Clause"],
+        "answer": 0,
+        "explanation": "'that he is honest' acts as the direct object of the transitive verb 'know', making it a Noun Clause.",
+        "rule": "Noun Clause as Object of a Transitive Verb",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-cl-2",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "In 'The boy [who came here yesterday] is my cousin', the bracketed clause is a/an:",
+        "options": ["Noun Clause", "Adjective (Relative) Clause", "Adverbial Clause of Reason", "Principal Clause"],
+        "answer": 1,
+        "explanation": "'who came here yesterday' qualifies and describes the antecedent noun 'The boy', functioning as an Adjective Clause.",
+        "rule": "Adjective Clause qualifying an Antecedent Noun",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-cl-3",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "Identify the clause type: 'We will go out [when the rain stops].'",
+        "options": ["Adverbial Clause of Time", "Adjective Clause", "Noun Clause", "Adverbial Clause of Purpose"],
+        "answer": 0,
+        "explanation": "'when the rain stops' answers the question 'When?' and modifies the verb 'will go', making it an Adverbial Clause of Time.",
+        "rule": "Adverbial Clause of Time",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-cl-4",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "In 'He failed [because he did not study diligently]', the dependent clause is a/an:",
+        "options": ["Adverbial Clause of Reason/Cause", "Noun Clause", "Adjective Clause", "Principal Clause"],
+        "answer": 0,
+        "explanation": "'because he did not study diligently' explains the cause or reason for the action in the main clause.",
+        "rule": "Adverbial Clause of Reason",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-cl-5",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "Which of the following contains a Noun Clause acting as the Subject of a verb?",
+        "options": [
+            "[What he said] surprised everyone.",
+            "I met a girl [whose hair was curly].",
+            "He ran [as fast as he could].",
+            "Stay [where you are]."
+        ],
+        "answer": 0,
+        "explanation": "'What he said' functions as the complete subject of the verb 'surprised'.",
+        "rule": "Noun Clause as Subject of Verb",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-cl-6",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "In 'This is the reason [why he resigned]', what type of clause is 'why he resigned'?",
+        "options": ["Adjective (Relative) Clause", "Noun Clause", "Adverbial Clause of Manner", "Independent Clause"],
+        "answer": 0,
+        "explanation": "'why he resigned' qualifies the noun 'reason' (its antecedent), making it an Adjective Clause.",
+        "rule": "Relative Adverb introducing an Adjective Clause",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-cl-7",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "Identify the clause type: '[Though he was poor], he was thoroughly honest.'",
+        "options": ["Adverbial Clause of Concession / Contrast", "Noun Clause", "Adjective Clause", "Adverbial Clause of Result"],
+        "answer": 0,
+        "explanation": "'Though he was poor' expresses concession/contrast against the main clause.",
+        "rule": "Adverbial Clause of Concession (though / although)",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-cl-8",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "In the sentence 'We eat [that we may live]', the subordinate clause is a/an:",
+        "options": ["Adverbial Clause of Purpose", "Noun Clause", "Adjective Clause", "Adverbial Clause of Comparison"],
+        "answer": 0,
+        "explanation": "'that we may live' expresses the purpose of eating, introduced by 'that/so that'.",
+        "rule": "Adverbial Clause of Purpose",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-cl-9",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "Identify the function of the Noun Clause: 'There is no truth in [what he claims].'",
+        "options": ["Object of a Preposition ('in')", "Subject of a Verb", "Object of a Verb", "Complement of a Verb"],
+        "answer": 0,
+        "explanation": "The noun clause 'what he claims' is governed by the preposition 'in', acting as the object of a preposition.",
+        "rule": "Noun Clause as Object of Preposition",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-cl-10",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "Identify the clause: 'If it rains, [we shall postpone the match].'",
+        "options": ["Principal (Main) Clause", "Subordinate Noun Clause", "Subordinate Adverbial Clause", "Coordinate Clause"],
+        "answer": 0,
+        "explanation": "'we shall postpone the match' can stand alone with complete meaning, making it the Principal Clause.",
+        "rule": "Principal vs Subordinate Clause",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-cl-11",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "What type of clause is bracketed in 'He was so tired [that he could not walk]'?",
+        "options": ["Adverbial Clause of Result / Consequence", "Noun Clause", "Adjective Clause", "Adverbial Clause of Condition"],
+        "answer": 0,
+        "explanation": "'that he could not walk' indicates the consequence or result of being tired, introduced by 'so...that'.",
+        "rule": "Adverbial Clause of Result",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-cl-12",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "Identify the Adjective Clause in: 'The house where Tagore was born is in Jorasanko.'",
+        "options": ["where Tagore was born", "The house is in Jorasanko", "was born is in Jorasanko", "Tagore was born"],
+        "answer": 0,
+        "explanation": "'where Tagore was born' qualifies the noun 'The house', acting as an Adjective Clause.",
+        "rule": "Adjective Clause with Relative Adverb",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-cl-13",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "In 'The news [that he had won the scholarship] made his mother proud', the clause is a:",
+        "options": ["Noun Clause in Apposition to a Noun", "Adverbial Clause of Manner", "Adjective Clause", "Principal Clause"],
+        "answer": 0,
+        "explanation": "'that he had won the scholarship' explains the content of the noun 'news', functioning as a Noun Clause in Apposition.",
+        "rule": "Noun Clause in Apposition",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-cl-14",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "Identify the Adverbial Clause of Manner in: 'You may do the work [as you please].'",
+        "options": ["as you please", "You may do the work", "the work as you", "may do the work"],
+        "answer": 0,
+        "explanation": "'as you please' answers 'How/In what manner?' the work may be done, making it an Adverbial Clause of Manner.",
+        "rule": "Adverbial Clause of Manner",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-cl-15",
+        "category": "Grammar: Clause",
+        "type": "mcq",
+        "question": "Combine into a complex sentence with a Relative Clause: 'This is the doctor. He treated my grandmother.'",
+        "options": [
+            "This is the doctor who treated my grandmother.",
+            "This is the doctor and he treated my grandmother.",
+            "Being the doctor, he treated my grandmother.",
+            "This doctor treated my grandmother."
+        ],
+        "answer": 0,
+        "explanation": "'who treated my grandmother' is the proper Relative (Adjective) Clause referring to 'the doctor'.",
+        "rule": "Synthesis of Sentences with Relative Clause",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-cldd-1",
+        "category": "Grammar: Clause",
+        "type": "drag_drop",
+        "sentence": "I know the exact spot {BLANK} the ancient treasure was buried.",
+        "options": ["where", "that", "which", "whom"],
+        "answer": "where",
+        "explanation": "'where' serves as the relative adverb introducing the Adjective Clause modifying 'spot'.",
+        "rule": "Adjective Clause Connectors",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-cldd-2",
+        "category": "Grammar: Clause",
+        "type": "drag_drop",
+        "sentence": "He worked day and night {BLANK} he might pass with flying colours.",
+        "options": ["so that", "because", "unless", "although"],
+        "answer": "so that",
+        "explanation": "'so that' introduces an Adverbial Clause of Purpose followed by modal 'might'.",
+        "rule": "Clause of Purpose Connector",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-cldd-3",
+        "category": "Grammar: Clause",
+        "type": "drag_drop",
+        "sentence": "You cannot succeed in life {BLANK} you work hard.",
+        "options": ["unless", "since", "so that", "because"],
+        "answer": "unless",
+        "explanation": "'unless' (meaning 'if not') introduces an Adverbial Clause of Condition.",
+        "rule": "Conditional Clause Connector",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-cldd-4",
+        "category": "Grammar: Clause",
+        "type": "drag_drop",
+        "sentence": "{BLANK} he is very old, he walks briskly every morning.",
+        "options": ["Although", "Because", "Unless", "Since"],
+        "answer": "Although",
+        "explanation": "'Although' introduces an Adverbial Clause of Concession / Contrast.",
+        "rule": "Adverbial Clause of Concession",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-cldd-5",
+        "category": "Grammar: Clause",
+        "type": "drag_drop",
+        "sentence": "I wonder {BLANK} he will arrive before sunset.",
+        "options": ["whether", "which", "whose", "whom"],
+        "answer": "whether",
+        "explanation": "'whether' introduces a Noun Clause as the direct object of 'wonder'.",
+        "rule": "Noun Clause Connector",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-cldd-6",
+        "category": "Grammar: Clause",
+        "type": "drag_drop",
+        "sentence": "The umbrella {BLANK} has a broken handle belongs to Rahul.",
+        "options": ["which", "who", "whom", "where"],
+        "answer": "which",
+        "explanation": "'which' is the relative pronoun used for inanimate things ('umbrella').",
+        "rule": "Relative Pronoun for Things",
+        "difficulty": "Easy"
+      },
+
+      // GRAMMAR: MODALS
+      {
+        "id": "g-mo-1",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "Which modal auxiliary best expresses strong moral obligation or duty? 'We _______ respect our elders.'",
+        "options": ["ought to", "might", "could", "would"],
+        "answer": 0,
+        "explanation": "'ought to' expresses strong moral obligation or ethical duty.",
+        "rule": "Modal for Moral Duty: Ought to / Must",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-mo-2",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "Choose the correct modal to express polite, formal permission: '_______ I come in, Sir?'",
+        "options": ["May", "Must", "Might", "Will"],
+        "answer": 0,
+        "explanation": "'May' is the formal, respectful modal auxiliary used for seeking permission.",
+        "rule": "Formal Permission: May",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-mo-3",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "Which modal expresses a past discontinued habit? 'My grandfather _______ go for a swim every dawn.'",
+        "options": ["used to", "must", "should", "ought"],
+        "answer": 0,
+        "explanation": "'used to' indicates a past routine that is no longer practiced in the present.",
+        "rule": "Past Discontinued Habit: Used to",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-mo-4",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "Select the modal indicating absolute compulsion or necessity: 'Candidates _______ answer all questions.'",
+        "options": ["must", "can", "might", "could"],
+        "answer": 0,
+        "explanation": "'must' expresses strict compulsion, regulation, or mandatory obligation.",
+        "rule": "Compulsion / Obligation: Must",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-mo-5",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "Which modal is used to make a very polite request? '_______ you please lend me your notebook?'",
+        "options": ["Would", "Must", "Shall", "Need"],
+        "answer": 0,
+        "explanation": "'Would' (or 'Could') is used to make courteous and polite requests.",
+        "rule": "Polite Request: Would / Could",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-mo-6",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "'Look at those dark storm clouds! It _______ rain today.' Which modal expresses strong factual possibility?",
+        "options": ["may", "shall", "dare", "ought"],
+        "answer": 0,
+        "explanation": "'may' expresses a high factual possibility based on visible indicators.",
+        "rule": "Factual Possibility: May",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-mo-7",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "Which sentence correctly uses 'dare' as a semi-modal auxiliary expressing courage?",
+        "options": [
+            "How dare you open my personal diary?",
+            "He dares to running fast.",
+            "You dare not to go there.",
+            "I am daring to swim."
+        ],
+        "answer": 0,
+        "explanation": "In negative and interrogative structures, 'dare' acts as an auxiliary verb followed by a bare infinitive without 'to'.",
+        "rule": "Semi-modal: Dare",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-mo-8",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "'You have plenty of time. You _______ not hurry.' Choose the appropriate modal.",
+        "options": ["need", "must", "should", "shall"],
+        "answer": 0,
+        "explanation": "'need not' denotes absence of obligation or lack of necessity.",
+        "rule": "Absence of Obligation: Need not",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-mo-9",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "What nuance does 'might' express in 'He might pass the exam if he studies hard'?",
+        "options": ["Remote / weak possibility", "Absolute certainty", "Command", "Moral duty"],
+        "answer": 0,
+        "explanation": "'Might' denotes a weaker or more remote possibility than 'may'.",
+        "rule": "Degrees of Possibility: Might vs May",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-mo-10",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "Which modal expresses advice or recommendation? 'You _______ consult a doctor immediately.'",
+        "options": ["should", "will", "might", "can"],
+        "answer": 0,
+        "explanation": "'should' is used to give counsel, advice, or suggestions.",
+        "rule": "Advice / Recommendation: Should",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-mo-11",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "Which modal expresses natural ability in the present? 'Sourav _______ speak four languages fluently.'",
+        "options": ["can", "may", "must", "might"],
+        "answer": 0,
+        "explanation": "'can' indicates physical or mental capability and ability in the present tense.",
+        "rule": "Present Ability: Can",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-mo-12",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "Which modal expresses past ability? 'When I was young, I _______ run ten miles effortlessly.'",
+        "options": ["could", "can", "may", "must"],
+        "answer": 0,
+        "explanation": "'could' expresses general ability in the past tense.",
+        "rule": "Past Ability: Could",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-mo-13",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "In the sentence '_______ God bless you with health and happiness!', which modal is used?",
+        "options": ["May", "Can", "Will", "Must"],
+        "answer": 0,
+        "explanation": "'May' is used in optative sentences to express wishes, prayers, or blessings.",
+        "rule": "Optative Wishes / Prayers: May",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-mo-14",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "Which modal expresses strong logical deduction or certainty? 'He has worked for 14 hours today; he _______ be exhausted.'",
+        "options": ["must", "can", "might", "shall"],
+        "answer": 0,
+        "explanation": "'must' is used for strong logical conclusions based on evident facts.",
+        "rule": "Logical Deduction: Must",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-mo-15",
+        "category": "Grammar: Modals",
+        "type": "mcq",
+        "question": "Which modal expresses determination with first person subject? 'We _______ fight for justice until we win.'",
+        "options": ["will", "shall", "might", "can"],
+        "answer": 0,
+        "explanation": "With 1st person subjects ('I'/'We'), 'will' expresses strong determination, promise, or intention.",
+        "rule": "Determination with 1st Person: Will",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-modd-1",
+        "category": "Grammar: Modals",
+        "type": "drag_drop",
+        "sentence": "You {BLANK} submit your examination sheet before the final bell rings.",
+        "options": ["must", "might", "could", "used to"],
+        "answer": "must",
+        "explanation": "'must' expresses mandatory rules and urgent obligations in an exam context.",
+        "rule": "Compulsion: Must",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-modd-2",
+        "category": "Grammar: Modals",
+        "type": "drag_drop",
+        "sentence": "{BLANK} you please pass me the dictionary?",
+        "options": ["Could", "Must", "Shall", "Dare"],
+        "answer": "Could",
+        "explanation": "'Could' is used to frame polite requests.",
+        "rule": "Polite Inquiries: Could",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-modd-3",
+        "category": "Grammar: Modals",
+        "type": "drag_drop",
+        "sentence": "Citizens {BLANK} to obey the laws of their country.",
+        "options": ["ought", "should", "must", "can"],
+        "answer": "ought",
+        "explanation": "'ought' takes the preposition 'to' ('ought to') to express moral and civic duty.",
+        "rule": "Modal Pattern: Ought + to",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-modd-4",
+        "category": "Grammar: Modals",
+        "type": "drag_drop",
+        "sentence": "When she was a child, she {BLANK} to sing every evening.",
+        "options": ["used", "must", "might", "ought"],
+        "answer": "used",
+        "explanation": "'used to' signifies a past habitual action.",
+        "rule": "Past Routine: Used to",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-modd-5",
+        "category": "Grammar: Modals",
+        "type": "drag_drop",
+        "sentence": "You {BLANK} not worry; everything is under complete control.",
+        "options": ["need", "dare", "ought", "shall"],
+        "answer": "need",
+        "explanation": "'need not' indicates absence of necessity or anxiety.",
+        "rule": "Absence of Necessity: Need not",
+        "difficulty": "Medium"
+      },
+
+      // GRAMMAR: INFINITIVES
+      {
+        "id": "g-inf-1",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Identify the infinitive and its grammatical function: '[To err] is human, to forgive divine.'",
+        "options": [
+            "Simple Infinitive used as the Subject of the verb 'is'",
+            "Gerundial Infinitive used as an Object",
+            "Bare Infinitive used as an Adverb",
+            "Split Infinitive"
+        ],
+        "answer": 0,
+        "explanation": "'To err' is a Simple (Noun) Infinitive functioning as the subject of the verb 'is'.",
+        "rule": "Infinitive as Subject of a Verb",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-inf-2",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Which sentence contains a Bare Infinitive (infinitive without 'to')?",
+        "options": [
+            "I saw him [cross] the street.",
+            "I want [to cross] the street.",
+            "He came [to meet] me.",
+            "It is healthy [to walk]."
+        ],
+        "answer": 0,
+        "explanation": "After verbs of perception like 'see', 'hear', 'watch', and causatives like 'make', 'let', the bare infinitive ('cross') is used.",
+        "rule": "Bare Infinitive after Verbs of Perception",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-inf-3",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Combine the sentences using an infinitive: 'He went to Agra. He wanted to visit the Taj Mahal.'",
+        "options": [
+            "He went to Agra to visit the Taj Mahal.",
+            "He went to Agra and he visited the Taj Mahal.",
+            "Going to Agra, he visited the Taj Mahal.",
+            "He went to Agra because he visited the Taj Mahal."
+        ],
+        "answer": 0,
+        "explanation": "'to visit the Taj Mahal' expresses the purpose of going to Agra using a gerundial infinitive.",
+        "rule": "Joining Sentences with Infinitive of Purpose",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-inf-4",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Transform using 'too...to': 'The old man is so weak that he cannot walk.'",
+        "options": [
+            "The old man is too weak to walk.",
+            "The old man is so weak to walk.",
+            "The old man is very weak to walk.",
+            "The old man is too weak that he cannot walk."
+        ],
+        "answer": 0,
+        "explanation": "'so...that...cannot' transforms into 'too + adjective + to + base verb'.",
+        "rule": "Transformation of 'so...that' into 'too...to'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-inf-5",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Identify the Gerundial (Qualifying) Infinitive: 'Give him a chair [to sit on].'",
+        "options": [
+            "Qualifying the noun 'chair' (acting like an adjective)",
+            "Subject of a verb",
+            "Object of a verb",
+            "Bare infinitive"
+        ],
+        "answer": 0,
+        "explanation": "'to sit on' qualifies the noun 'chair' to indicate purpose, acting as a Gerundial/Adjectival Infinitive.",
+        "rule": "Gerundial Infinitive qualifying a Noun",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-inf-6",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Which verb is followed by a Bare Infinitive? 'The teacher made the boy _______ the paragraph again.'",
+        "options": ["write", "to write", "writing", "written"],
+        "answer": 0,
+        "explanation": "The causative verb 'make' in active voice requires a bare infinitive ('write') without 'to'.",
+        "rule": "Bare Infinitive with 'Make'",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-inf-7",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "In 'I like [to play] chess', the infinitive functions as:",
+        "options": ["Object of the transitive verb 'like'", "Subject of the sentence", "Adverb modifying 'chess'", "Bare infinitive"],
+        "answer": 0,
+        "explanation": "'to play' is the direct object of the verb 'like' (answering: what do I like?).",
+        "rule": "Infinitive as Direct Object",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-inf-8",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Which sentence contains a correct combination using an infinitive?",
+        "options": [
+            "I have no money to spare.",
+            "I have no money for to spare.",
+            "I have no money so that to spare.",
+            "I have no money sparing."
+        ],
+        "answer": 0,
+        "explanation": "'I have no money to spare' is the grammatically correct synthesis using an infinitive of purpose.",
+        "rule": "Infinitive Synthesis",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-inf-9",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Identify the infinitive expressing cause: 'We were delighted [to receive] your invitation.'",
+        "options": ["to receive", "were delighted", "your invitation", "delighted to"],
+        "answer": 0,
+        "explanation": "'to receive' is a qualifying infinitive modifying the adjective 'delighted' to show the cause of delight.",
+        "rule": "Infinitive modifying an Adjective",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-inf-10",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Choose the correct form: 'Let him _______ the truth.'",
+        "options": ["speak", "to speak", "speaking", "spoke"],
+        "answer": 0,
+        "explanation": "The verb 'let' is followed by a bare infinitive without 'to' ('speak').",
+        "rule": "Bare Infinitive with 'Let'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-inf-11",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Transform into 'so...that': 'He is too proud to beg.'",
+        "options": [
+            "He is so proud that he will not beg.",
+            "He is proud that he cannot beg.",
+            "He is so proud to beg.",
+            "He is very proud so he cannot beg."
+        ],
+        "answer": 0,
+        "explanation": "'too proud to beg' transforms into 'so proud that he will not/cannot beg'.",
+        "rule": "Transformation of 'too...to' into 'so...that'",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-inf-12",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "In 'It is our duty [to protect] the environment', the infinitive is used as:",
+        "options": [
+            "Apposition to the anticipatory / preparatory subject 'It'",
+            "Object of preposition",
+            "Bare infinitive",
+            "Adverb of condition"
+        ],
+        "answer": 0,
+        "explanation": "'to protect the environment' is the real subject represented initially by the dummy pronoun 'It'.",
+        "rule": "Infinitive in Apposition to 'It'",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-inf-13",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Choose the correct sentence avoiding a split infinitive:",
+        "options": [
+            "You need to understand the concept clearly.",
+            "You need to clearly understand the concept.",
+            "You to clearly need understand.",
+            "To understand clearly you concept."
+        ],
+        "answer": 0,
+        "explanation": "In formal English, placing the adverb after the verb ('understand clearly') avoids splitting 'to' and 'understand'.",
+        "rule": "Infinitive Structure",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-inf-14",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Which sentence correctly uses an infinitive as the Complement of a verb?",
+        "options": [
+            "His greatest ambition is [to become] a scientist.",
+            "To swim is good exercise.",
+            "He likes to swim.",
+            "I saw him swim."
+        ],
+        "answer": 0,
+        "explanation": "'to become a scientist' completes the meaning of the linking verb 'is', functioning as a Subject Complement.",
+        "rule": "Infinitive as Subject Complement",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-inf-15",
+        "category": "Grammar: Infinitives",
+        "type": "mcq",
+        "question": "Fill in the blank: 'He was the first man _______ the summit of Mount Everest.'",
+        "options": ["to reach", "reach", "for reach", "reached"],
+        "answer": 0,
+        "explanation": "After ordinal numbers ('the first', 'the second', 'the last'), qualifying infinitives ('to reach') are used.",
+        "rule": "Infinitive after Ordinals",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-infdd-1",
+        "category": "Grammar: Infinitives",
+        "type": "drag_drop",
+        "sentence": "The news was {BLANK} good to be true.",
+        "options": ["too", "so", "very", "much"],
+        "answer": "too",
+        "explanation": "Formula: 'too + adjective + to-infinitive' indicates excess resulting in an impossibility.",
+        "rule": "Too...to Construction",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-infdd-2",
+        "category": "Grammar: Infinitives",
+        "type": "drag_drop",
+        "sentence": "She was overjoyed {BLANK} receive the first prize in the debate.",
+        "options": ["to", "for", "with", "by"],
+        "answer": "to",
+        "explanation": "The gerundial infinitive 'to receive' modifies the adjective 'overjoyed'.",
+        "rule": "Infinitive modifying an Adjective",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-infdd-3",
+        "category": "Grammar: Infinitives",
+        "type": "drag_drop",
+        "sentence": "Please let the students {BLANK} inside the science laboratory.",
+        "options": ["come", "to come", "coming", "came"],
+        "answer": "come",
+        "explanation": "The causative verb 'let' is followed by a bare infinitive ('come') without 'to'.",
+        "rule": "Bare Infinitive with 'Let'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-infdd-4",
+        "category": "Grammar: Infinitives",
+        "type": "drag_drop",
+        "sentence": "He went to the book fair {BLANK} buy some classic novels.",
+        "options": ["to", "for", "so", "in"],
+        "answer": "to",
+        "explanation": "'to buy' expresses purpose using an infinitive.",
+        "rule": "Infinitive of Purpose",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-infdd-5",
+        "category": "Grammar: Infinitives",
+        "type": "drag_drop",
+        "sentence": "I heard the nightingale {BLANK} sweetly in the garden.",
+        "options": ["sing", "to sing", "sang", "sung"],
+        "answer": "sing",
+        "explanation": "Verbs of perception like 'hear' take a bare infinitive ('sing').",
+        "rule": "Bare Infinitive with 'Hear'",
+        "difficulty": "Medium"
+      },
+
+      // GRAMMAR: PREFIX AND SUFFIX
+      {
+        "id": "g-ps-1",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Which prefix can be added to the word 'mortal' to create its exact antonym?",
+        "options": ["im-", "un-", "dis-", "in-"],
+        "answer": 0,
+        "explanation": "Adding the prefix 'im-' before 'mortal' forms 'immortal' (living forever).",
+        "rule": "Negative Prefix 'im-' before 'm' and 'p'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ps-2",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Which suffix is added to the verb 'govern' to turn it into an abstract noun?",
+        "options": ["-ment", "-ful", "-less", "-ly"],
+        "answer": 0,
+        "explanation": "'govern' (verb) + '-ment' = 'government' (abstract noun).",
+        "rule": "Noun-forming Suffix '-ment'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ps-3",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Choose the correct prefix to form the opposite of 'obedient':",
+        "options": ["dis-", "un-", "mis-", "non-"],
+        "answer": 0,
+        "explanation": "Prefix 'dis-' + 'obedient' = 'disobedient'.",
+        "rule": "Negative Prefix 'dis-'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ps-4",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Which suffix converts the noun 'beauty' into an adjective?",
+        "options": ["-ful (beautiful)", "-ment", "-ness", "-tion"],
+        "answer": 0,
+        "explanation": "'beauty' + '-ful' = 'beautiful' (adjective), changing 'y' to 'i'.",
+        "rule": "Adjective-forming Suffix '-ful'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ps-5",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "What is the root word of 'unhappiness'?",
+        "options": ["happy", "unhappy", "happiness", "hap"],
+        "answer": 0,
+        "explanation": "The base root word is 'happy'. 'un-' is the prefix and '-ness' is the suffix.",
+        "rule": "Root Word Identification",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-ps-6",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Add the appropriate prefix to 'legible' to mean 'impossible to read':",
+        "options": ["il-", "im-", "in-", "un-"],
+        "answer": 0,
+        "explanation": "Words beginning with 'l' typically take the prefix 'il-' to denote negation -> 'illegible'.",
+        "rule": "Prefix 'il-' before 'l'",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-ps-7",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Which prefix means 'wrongly' or 'badly' in the word 'understand'?",
+        "options": ["mis- (misunderstand)", "dis-", "un-", "in-"],
+        "answer": 0,
+        "explanation": "The prefix 'mis-' signifies wrong or mistaken action -> 'misunderstand'.",
+        "rule": "Prefix 'mis-'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ps-8",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Which suffix added to 'care' means 'without care' or 'inattentive'?",
+        "options": ["-less (careless)", "-ful", "-ment", "-ly"],
+        "answer": 0,
+        "explanation": "The suffix '-less' means 'without' or lacking -> 'careless'.",
+        "rule": "Suffix '-less'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ps-9",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Which suffix transforms the adjective 'kind' into an abstract noun?",
+        "options": ["-ness (kindness)", "-ment", "-able", "-ous"],
+        "answer": 0,
+        "explanation": "Adding '-ness' to adjectives creates abstract quality nouns -> 'kindness'.",
+        "rule": "Abstract Noun Suffix '-ness'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ps-10",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "What is the antonym of 'regular' formed with a prefix?",
+        "options": ["irregular", "unregular", "disregular", "inregular"],
+        "answer": 0,
+        "explanation": "Words starting with 'r' generally take the prefix 'ir-' to form their opposite -> 'irregular'.",
+        "rule": "Prefix 'ir-' before 'r'",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-ps-11",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Which prefix can be attached to 'courage' to create the verb meaning 'to inspire with confidence'?",
+        "options": ["en- (encourage)", "dis-", "un-", "in-"],
+        "answer": 0,
+        "explanation": "The prefix 'en-' creates verbs denoting putting into a state -> 'encourage'.",
+        "rule": "Verb-forming Prefix 'en-'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ps-12",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Which suffix forms an adjective meaning 'capable of being read' from 'read'?",
+        "options": ["-able (readable)", "-ful", "-less", "-ish"],
+        "answer": 0,
+        "explanation": "The suffix '-able' creates adjectives signifying capability -> 'readable'.",
+        "rule": "Suffix '-able'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ps-13",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Add a suffix to 'child' to denote the state or period of being a child:",
+        "options": ["-hood (childhood)", "-ship", "-ment", "-ness"],
+        "answer": 0,
+        "explanation": "The suffix '-hood' forms nouns denoting a stage of life or condition -> 'childhood'.",
+        "rule": "Noun Suffix '-hood'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ps-14",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "Which prefix attached to 'cycle' means 'two' or 'twice'?",
+        "options": ["bi- (bicycle)", "tri-", "uni-", "multi-"],
+        "answer": 0,
+        "explanation": "'bi-' is a numerical prefix meaning two -> 'bicycle' (two wheels).",
+        "rule": "Numerical Prefix 'bi-'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ps-15",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "mcq",
+        "question": "What is the suffix in 'quickly' that converts an adjective into an adverb?",
+        "options": ["-ly", "-y", "-ckly", "-ily"],
+        "answer": 0,
+        "explanation": "'-ly' is the standard adverb-forming suffix added to adjectives -> 'quick' + '-ly' = 'quickly'.",
+        "rule": "Adverb-forming Suffix '-ly'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-psdd-1",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "drag_drop",
+        "sentence": "It is completely {BLANK}responsible to drive without a valid license.",
+        "options": ["ir", "un", "dis", "im"],
+        "answer": "ir",
+        "explanation": "'ir-' is the appropriate prefix before 'responsible' to form 'irresponsible'.",
+        "rule": "Prefix 'ir-' before 'r'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-psdd-2",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "drag_drop",
+        "sentence": "The magician made the white rabbit {BLANK}appear before our eyes.",
+        "options": ["dis", "un", "mis", "in"],
+        "answer": "dis",
+        "explanation": "'dis-' + 'appear' = 'disappear' (vanish from sight).",
+        "rule": "Prefix 'dis-'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-psdd-3",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "drag_drop",
+        "sentence": "True friend{BLANK} is one of the greatest treasures in human life.",
+        "options": ["ship", "ment", "ness", "able"],
+        "answer": "ship",
+        "explanation": "The suffix '-ship' forms the abstract state noun 'friendship'.",
+        "rule": "Noun Suffix '-ship'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-psdd-4",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "drag_drop",
+        "sentence": "He made a {BLANK}fortune and lost all his investments.",
+        "options": ["mis", "dis", "un", "non"],
+        "answer": "mis",
+        "explanation": "'misfortune' means bad luck or an unfortunate event.",
+        "rule": "Prefix 'mis-'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-psdd-5",
+        "category": "Grammar: Prefix and Suffix",
+        "type": "drag_drop",
+        "sentence": "The teacher praised the boy for his polite{BLANK}.",
+        "options": ["ness", "ment", "ship", "hood"],
+        "answer": "ness",
+        "explanation": "'politeness' is the abstract noun formed from the adjective 'polite'.",
+        "rule": "Abstract Noun Suffix '-ness'",
+        "difficulty": "Easy"
+      },
+
+      // GRAMMAR: VOICE CHANGE
+      {
+        "id": "g-vc-1",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change the voice: 'The teacher praised the boy.'",
+        "options": [
+            "The boy was praised by the teacher.",
+            "The boy is praised by the teacher.",
+            "The boy has been praised by the teacher.",
+            "The boy was being praised by the teacher."
+        ],
+        "answer": 0,
+        "explanation": "Simple Past tense ('praised') in passive voice becomes 'was/were + past participle' -> 'was praised'.",
+        "rule": "Simple Past Passive: was/were + V3",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vc-2",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change into passive voice: 'Shut the door.'",
+        "options": [
+            "Let the door be shut.",
+            "The door should shut.",
+            "You shut the door.",
+            "Let the door shut."
+        ],
+        "answer": 0,
+        "explanation": "Imperative command structure in passive is: 'Let + Object + be + Past Participle (V3)' -> 'Let the door be shut.'",
+        "rule": "Imperative Voice: Let + Object + be + V3",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vc-3",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change the voice: 'They are playing football in the field.'",
+        "options": [
+            "Football is being played in the field by them.",
+            "Football was being played in the field by them.",
+            "Football has been played in the field by them.",
+            "Football is played in the field by them."
+        ],
+        "answer": 0,
+        "explanation": "Present Continuous active ('are playing') converts into 'is/are + being + V3' -> 'is being played'.",
+        "rule": "Continuous Tense Passive: is/are + being + V3",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vc-4",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change the voice: 'Who wrote this famous poem?'",
+        "options": [
+            "By whom was this famous poem written?",
+            "Who was this famous poem written by?",
+            "By whom is this famous poem written?",
+            "Whom wrote this famous poem?"
+        ],
+        "answer": 0,
+        "explanation": "'Who' changes to 'By whom + auxiliary was + subject + V3' in standard formal English.",
+        "rule": "Interrogative Voice with 'Who'",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-vc-5",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change into passive: 'You must obey the traffic rules.'",
+        "options": [
+            "The traffic rules must be obeyed by you.",
+            "The traffic rules must obey by you.",
+            "The traffic rules should have obeyed by you.",
+            "The traffic rules must been obeyed by you."
+        ],
+        "answer": 0,
+        "explanation": "Modal auxiliary passive rule: 'modal + be + V3' -> 'must be obeyed'.",
+        "rule": "Modal Auxiliary in Passive Voice",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vc-6",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change into active voice: 'A letter has been written by Anita.'",
+        "options": [
+            "Anita has written a letter.",
+            "Anita wrote a letter.",
+            "Anita is writing a letter.",
+            "Anita had written a letter."
+        ],
+        "answer": 0,
+        "explanation": "'has been written' is Present Perfect passive; in active voice it becomes 'has written'.",
+        "rule": "Passive to Active: Present Perfect",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vc-7",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change the voice of the quasi-passive verb: 'Honey tastes sweet.'",
+        "options": [
+            "Honey is sweet when it is tasted.",
+            "Honey was sweet when tasted.",
+            "Let honey be sweet tasted.",
+            "Honey is tasted sweetly."
+        ],
+        "answer": 0,
+        "explanation": "Quasi-passive verbs take the transformation: 'Subject + is + adjective + when it is + V3' -> 'Honey is sweet when it is tasted.'",
+        "rule": "Quasi-Passive Voice Transformation",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-vc-8",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change into passive: 'Please help me.'",
+        "options": [
+            "You are requested to help me.",
+            "Let me be helped please.",
+            "I should be helped by you please.",
+            "You are ordered to help me."
+        ],
+        "answer": 0,
+        "explanation": "Polite imperative requests beginning with 'Please' convert to 'You are requested to + V1'.",
+        "rule": "Imperative Request: You are requested to...",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vc-9",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change the voice: 'The doctor had cured the patient.'",
+        "options": [
+            "The patient had been cured by the doctor.",
+            "The patient has been cured by the doctor.",
+            "The patient was cured by the doctor.",
+            "The patient had cured by the doctor."
+        ],
+        "answer": 0,
+        "explanation": "Past Perfect 'had cured' converts to 'had been cured' in passive voice.",
+        "rule": "Past Perfect Passive: had been + V3",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-vc-10",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change into passive: 'I know him well.'",
+        "options": [
+            "He is well known to me.",
+            "He is well known by me.",
+            "He was well known with me.",
+            "He has been known to me."
+        ],
+        "answer": 0,
+        "explanation": "The verb 'know' takes the fixed preposition 'to' (not 'by') in passive voice -> 'known to me'.",
+        "rule": "Preposition other than 'by' (known to)",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-vc-11",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change the voice: 'We will paint the house tomorrow.'",
+        "options": [
+            "The house will be painted by us tomorrow.",
+            "The house will paint by us tomorrow.",
+            "The house is painted by us tomorrow.",
+            "The house would be painted by us tomorrow."
+        ],
+        "answer": 0,
+        "explanation": "Simple Future 'will paint' converts to 'will be + V3' -> 'will be painted'.",
+        "rule": "Simple Future Passive: will be + V3",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vc-12",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change into passive: 'Do not pluck flowers.'",
+        "options": [
+            "Let flowers not be plucked.",
+            "Flowers should not pluck.",
+            "You do not pluck flowers.",
+            "Let flowers be not pluck."
+        ],
+        "answer": 0,
+        "explanation": "Negative imperative passive: 'Let + Object + not + be + V3' -> 'Let flowers not be plucked.'",
+        "rule": "Negative Imperative Passive",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-vc-13",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change into active voice: 'The thief was caught by the police.'",
+        "options": [
+            "The police caught the thief.",
+            "The police catches the thief.",
+            "The police had caught the thief.",
+            "The police was catching the thief."
+        ],
+        "answer": 0,
+        "explanation": "'was caught' is Simple Past passive; its active form is Simple Past 'caught'.",
+        "rule": "Passive to Active: Simple Past",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vc-14",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change the voice: 'The news shocked everyone.'",
+        "options": [
+            "Everyone was shocked at the news.",
+            "Everyone was shocked by the news.",
+            "Everyone was shocked with the news.",
+            "Everyone is shocked at the news."
+        ],
+        "answer": 0,
+        "explanation": "'shocked' takes the preposition 'at' (or 'by') for inanimate news -> 'shocked at the news'.",
+        "rule": "Fixed Preposition in Passive: shocked at",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-vc-15",
+        "category": "Grammar: Voice Change",
+        "type": "mcq",
+        "question": "Change into passive: 'They elected him captain.'",
+        "options": [
+            "He was elected captain by them.",
+            "Captain was elected him by them.",
+            "He is elected captain by them.",
+            "He had been elected captain."
+        ],
+        "answer": 0,
+        "explanation": "In sentences with a Factitive Object / Objective Complement ('captain'), the direct person object ('him') becomes the subject ('He was elected captain').",
+        "rule": "Factitive Object in Passive Voice",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-vcdd-1",
+        "category": "Grammar: Voice Change",
+        "type": "drag_drop",
+        "sentence": "Let the poor {BLANK} not insulted.",
+        "options": ["be", "been", "being", "is"],
+        "answer": "be",
+        "explanation": "Passive imperative negative formula: 'Let + Object + not + be + V3' -> 'Let the poor not be insulted.'",
+        "rule": "Imperative Voice Formula",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vcdd-2",
+        "category": "Grammar: Voice Change",
+        "type": "drag_drop",
+        "sentence": "The injured puppy was {BLANK} treated by the veterinarian.",
+        "options": ["being", "been", "be", "to"],
+        "answer": "being",
+        "explanation": "Continuous passive requires 'being' before past participle: 'was being treated'.",
+        "rule": "Past Continuous Passive",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vcdd-3",
+        "category": "Grammar: Voice Change",
+        "type": "drag_drop",
+        "sentence": "This classical song is sung {BLANK} Shreya Ghoshal.",
+        "options": ["by", "with", "at", "to"],
+        "answer": "by",
+        "explanation": "'by' introduces the agent of action in passive voice.",
+        "rule": "Passive Agent Marker 'by'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vcdd-4",
+        "category": "Grammar: Voice Change",
+        "type": "drag_drop",
+        "sentence": "The brave soldier was awarded a medal {BLANK} the President.",
+        "options": ["by", "from", "to", "for"],
+        "answer": "by",
+        "explanation": "'by' indicates the performer of the action.",
+        "rule": "Passive Voice Agent",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-vcdd-5",
+        "category": "Grammar: Voice Change",
+        "type": "drag_drop",
+        "sentence": "Quinine is bitter when it {BLANK} tasted.",
+        "options": ["is", "was", "has", "be"],
+        "answer": "is",
+        "explanation": "Quasi-passive pattern: 'Subject + is + adjective + when it is + V3'.",
+        "rule": "Quasi-Passive Structure",
+        "difficulty": "Medium"
+      },
+
+      // GRAMMAR: NARRATION CHANGE
+      {
+        "id": "g-nc-1",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: The teacher said, 'The Earth moves round the Sun.'",
+        "options": [
+            "The teacher said that the Earth moves round the Sun.",
+            "The teacher said that the Earth moved round the Sun.",
+            "The teacher said that the Earth has moved round the Sun.",
+            "The teacher asked if the Earth moves round the Sun."
+        ],
+        "answer": 0,
+        "explanation": "Universal scientific truths and geographical facts do NOT change their tense in indirect speech.",
+        "rule": "Universal Truth / Habitual Fact: No Tense Shift",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-nc-2",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: Ram said to me, 'I am reading a book now.'",
+        "options": [
+            "Ram told me that he was reading a book then.",
+            "Ram said me that he is reading a book now.",
+            "Ram told me that he has been reading a book then.",
+            "Ram asked me that I was reading a book then."
+        ],
+        "answer": 0,
+        "explanation": "'said to' -> 'told', 'I' -> 'he', 'am reading' -> 'was reading', 'now' -> 'then'.",
+        "rule": "Assertive Narration: Tense, Pronoun & Time Adverb Shifts",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-nc-3",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: He said to me, 'Are you going to school today?'",
+        "options": [
+            "He asked me if I was going to school that day.",
+            "He asked me that if I am going to school today.",
+            "He told me if was I going to school that day.",
+            "He inquired me whether are you going to school today."
+        ],
+        "answer": 0,
+        "explanation": "Yes/No questions use reporting verb 'asked', connector 'if/whether', and change word order to assertive subject+verb ('I was going'). 'today' becomes 'that day'.",
+        "rule": "Interrogative Narration: Yes/No Questions with 'if'",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-nc-4",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: Father said to me, 'Where did you put my spectacles?'",
+        "options": [
+            "Father asked me where I had put his spectacles.",
+            "Father asked me that where did I put his spectacles.",
+            "Father asked me where had I put his spectacles.",
+            "Father told me where I put his spectacles."
+        ],
+        "answer": 0,
+        "explanation": "Wh-questions retain the Wh-word ('where'), convert Simple Past ('did put') into Past Perfect ('had put'), with assertive word order ('I had put').",
+        "rule": "Wh- Interrogative Narration with Past Tense Shift",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-nc-5",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: The doctor said to the patient, 'Take these medicines regularly.'",
+        "options": [
+            "The doctor advised the patient to take those medicines regularly.",
+            "The doctor said to the patient to take these medicines regularly.",
+            "The doctor ordered the patient that take those medicines regularly.",
+            "The doctor told the patient take those medicines regularly."
+        ],
+        "answer": 0,
+        "explanation": "Imperative advice uses reporting verb 'advised', connector 'to + V1', and changes 'these' to 'those'.",
+        "rule": "Imperative Advice: advised + to + V1",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-nc-6",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: Mother said to me, 'May God bless you!'",
+        "options": [
+            "Mother prayed that God might bless me.",
+            "Mother wished that God may bless me.",
+            "Mother said that God might bless me.",
+            "Mother told me that God will bless me."
+        ],
+        "answer": 0,
+        "explanation": "Optative prayers use 'prayed that', subject + 'might' + V1 -> 'prayed that God might bless me.'",
+        "rule": "Optative Sentences: prayed/wished that ... might",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-nc-7",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: The boys said, 'Hurrah! We have won the match.'",
+        "options": [
+            "The boys exclaimed with joy that they had won the match.",
+            "The boys exclaimed with sorrow that they have won the match.",
+            "The boys shouted that we had won the match.",
+            "The boys said joyfully that we have won the match."
+        ],
+        "answer": 0,
+        "explanation": "'Hurrah!' indicates joy -> 'exclaimed with joy that', and Present Perfect ('have won') changes to Past Perfect ('had won').",
+        "rule": "Exclamatory Narration: exclaimed with joy that",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-nc-8",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: He said, 'I wrote a letter yesterday.'",
+        "options": [
+            "He said that he had written a letter the previous day.",
+            "He said that he wrote a letter yesterday.",
+            "He said that he has written a letter the day before.",
+            "He told that he had written a letter yesterday."
+        ],
+        "answer": 0,
+        "explanation": "Simple past ('wrote') becomes past perfect ('had written'), and 'yesterday' shifts to 'the previous day' or 'the day before'.",
+        "rule": "Time Adverb & Past Tense Shift",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-nc-9",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: The captain said to the soldiers, 'March forward!'",
+        "options": [
+            "The captain commanded the soldiers to march forward.",
+            "The captain requested the soldiers to march forward.",
+            "The captain said to the soldiers that they should march forward.",
+            "The captain asked the soldiers for marching forward."
+        ],
+        "answer": 0,
+        "explanation": "Military commands take the reporting verb 'commanded' or 'ordered' followed by infinitive 'to march forward'.",
+        "rule": "Military Command: commanded + to + V1",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-nc-10",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: She said, 'Alas! I am undone.'",
+        "options": [
+            "She exclaimed with sorrow that she was undone.",
+            "She said with joy that she was undone.",
+            "She told that she is undone.",
+            "She exclaimed that she had been undone."
+        ],
+        "answer": 0,
+        "explanation": "'Alas!' denotes grief/sorrow -> 'exclaimed with sorrow that', and 'am' becomes 'was'.",
+        "rule": "Exclamatory Expression of Grief",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-nc-11",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: The stranger said to me, 'What is your name?'",
+        "options": [
+            "The stranger asked me what my name was.",
+            "The stranger asked me what was my name.",
+            "The stranger told me what my name is.",
+            "The stranger inquired that what is my name."
+        ],
+        "answer": 0,
+        "explanation": "In indirect questions, the sentence becomes assertive: subject ('my name') comes before verb ('was').",
+        "rule": "Assertive Word Order in Indirect Questions",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-nc-12",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: He said, 'I will leave for Delhi tomorrow.'",
+        "options": [
+            "He said that he would leave for Delhi the next day.",
+            "He said that he will leave for Delhi tomorrow.",
+            "He said that he shall leave for Delhi the following day.",
+            "He told that he would leave for Delhi tomorrow."
+        ],
+        "answer": 0,
+        "explanation": "'will' changes to 'would', and 'tomorrow' becomes 'the next day' or 'the following day'.",
+        "rule": "Future Auxiliary & Adverb Shift",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-nc-13",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: The teacher said to the boy, 'Do not make a noise.'",
+        "options": [
+            "The teacher forbade the boy to make a noise.",
+            "The teacher forbade the boy not to make a noise.",
+            "The teacher ordered the boy for not making noise.",
+            "The teacher said to the boy not make noise."
+        ],
+        "answer": 0,
+        "explanation": "'forbade' already contains negative sense, so it is followed by positive infinitive: 'forbade the boy to make a noise' (or 'ordered not to make').",
+        "rule": "Negative Imperative with 'Forbade'",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-nc-14",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: He said, 'What a beautiful flower it is!'",
+        "options": [
+            "He exclaimed with wonder that it was a very beautiful flower.",
+            "He said that what a beautiful flower it is.",
+            "He exclaimed that the flower is very beautiful.",
+            "He asked if the flower was beautiful."
+        ],
+        "answer": 0,
+        "explanation": "Exclamatory sentences with 'What a...' convert to 'exclaimed with wonder that + subject + was a very + adjective'.",
+        "rule": "Exclamatory Transformation with 'Very'",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-nc-15",
+        "category": "Grammar: Narration Change",
+        "type": "mcq",
+        "question": "Change into indirect speech: He says, 'I am ready.' (Note: Present tense reporting verb)",
+        "options": [
+            "He says that he is ready.",
+            "He says that he was ready.",
+            "He said that he was ready.",
+            "He told that he is ready."
+        ],
+        "answer": 0,
+        "explanation": "When the reporting verb is in the Present ('says') or Future tense, the tense of the reported speech does NOT change.",
+        "rule": "Present Reporting Verb: No Tense Change",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-ncdd-1",
+        "category": "Grammar: Narration Change",
+        "type": "drag_drop",
+        "sentence": "The teacher told the students {BLANK} silence in the examination hall.",
+        "options": ["to maintain", "maintain", "maintaining", "that maintain"],
+        "answer": "to maintain",
+        "explanation": "Indirect imperative sentences connect using 'to + base verb'.",
+        "rule": "Indirect Imperative Connector",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ncdd-2",
+        "category": "Grammar: Narration Change",
+        "type": "drag_drop",
+        "sentence": "Sita asked Gita {BLANK} she would accompany her to the library.",
+        "options": ["whether", "that", "what", "which"],
+        "answer": "whether",
+        "explanation": "'whether' (or 'if') connects yes/no interrogative clauses in indirect speech.",
+        "rule": "Interrogative Connector",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ncdd-3",
+        "category": "Grammar: Narration Change",
+        "type": "drag_drop",
+        "sentence": "The boy exclaimed {BLANK} joy that they had won the championship.",
+        "options": ["with", "in", "by", "for"],
+        "answer": "with",
+        "explanation": "Standard idiom for exclamatory reporting is 'exclaimed with joy / sorrow / wonder'.",
+        "rule": "Exclamatory Reporting Phrase",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ncdd-4",
+        "category": "Grammar: Narration Change",
+        "type": "drag_drop",
+        "sentence": "He told me that he would complete the project the {BLANK} day.",
+        "options": ["next", "tomorrow", "yesterday", "previous"],
+        "answer": "next",
+        "explanation": "In indirect speech, 'tomorrow' becomes 'the next day' or 'the following day'.",
+        "rule": "Time Adverb Shift in Indirect Speech",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ncdd-5",
+        "category": "Grammar: Narration Change",
+        "type": "drag_drop",
+        "sentence": "Mother prayed {BLANK} God might shower blessings on us.",
+        "options": ["that", "to", "if", "for"],
+        "answer": "that",
+        "explanation": "Optative sentences are reported using 'prayed that + subject + might'.",
+        "rule": "Optative Sentence Connector",
+        "difficulty": "Easy"
+      },
+
+      // GRAMMAR: ARTICLES AND PREPOSITIONS
+      {
+        "id": "g-ap-1",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Fill in the blanks: 'He is _______ honest man and studies at _______ university in Kolkata.'",
+        "options": ["an, a", "a, an", "the, a", "an, an"],
+        "answer": 0,
+        "explanation": "'honest' begins with a silent 'h' (vowel sound 'o' -> 'an honest'), whereas 'university' begins with a consonant sound 'yu' -> 'a university'.",
+        "rule": "Article Sound Rules: Silent 'h' vs 'yu' sound",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ap-2",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Choose the correct preposition: 'My sister is very fond _______ listening to Rabindra Sangeet.'",
+        "options": ["of", "in", "to", "for"],
+        "answer": 0,
+        "explanation": "The adjective 'fond' takes the fixed preposition 'of' -> 'fond of'.",
+        "rule": "Fixed Preposition: fond of",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ap-3",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Select the appropriate preposition: 'He jumped _______ the river to rescue the drowning child.'",
+        "options": ["into", "in", "onto", "at"],
+        "answer": 0,
+        "explanation": "'into' expresses movement from the outside to the interior of a space or water body.",
+        "rule": "Preposition of Motion: into",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ap-4",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Fill in the blank: 'He has been suffering from fever _______ last Monday.'",
+        "options": ["since", "for", "from", "by"],
+        "answer": 0,
+        "explanation": "'since' is used for a specific point in time in perfect continuous tenses.",
+        "rule": "Preposition of Point of Time: Since vs For",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ap-5",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Choose the correct article: '_______ Himalayas stand like a majestic guard on the north of India.'",
+        "options": ["The", "A", "An", "No article"],
+        "answer": 0,
+        "explanation": "Definite article 'The' is mandatory before names of mountain ranges (The Himalayas, The Alps).",
+        "rule": "Article with Mountain Ranges",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ap-6",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Select the correct fixed preposition: 'Mr. Sen is senior _______ all other officers in the department.'",
+        "options": ["to", "than", "from", "with"],
+        "answer": 0,
+        "explanation": "Comparative adjectives ending in '-ior' (senior, junior, superior, inferior, prior) take 'to', never 'than'.",
+        "rule": "Adjectives ending in -ior take 'to'",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-ap-7",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Choose the correct preposition: 'Distribute these mangoes _______ the two brothers.'",
+        "options": ["between", "among", "with", "to"],
+        "answer": 0,
+        "explanation": "'between' is used when distributing or dividing between exactly two persons or things.",
+        "rule": "Between (two) vs Among (more than two)",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ap-8",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Fill in the blank with appropriate preposition: 'The police are looking _______ the mysterious burglary case.'",
+        "options": ["into", "after", "at", "for"],
+        "answer": 0,
+        "explanation": "The phrasal verb 'look into' means to investigate a case or crime.",
+        "rule": "Phrasal Preposition: look into (investigate)",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-ap-9",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Choose the appropriate article: 'Copper is _______ useful metal.'",
+        "options": ["a", "an", "the", "no article"],
+        "answer": 0,
+        "explanation": "'useful' starts with the vowel letter 'u' but produces the consonant sound 'yu' -> 'a useful metal'.",
+        "rule": "Article with 'yu' phonetic sound",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ap-10",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Select the correct preposition: 'The poor beggar died _______ cholera.'",
+        "options": ["of", "from", "with", "by"],
+        "answer": 0,
+        "explanation": "When a person dies directly of a disease (cholera, cancer, malaria), the preposition 'of' is used ('die of').",
+        "rule": "Fixed Preposition: die of (disease) vs die from (wound/overwork)",
+        "difficulty": "Hard"
+      },
+      {
+        "id": "g-ap-11",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Choose the correct preposition: 'He is proficient and good _______ Mathematics.'",
+        "options": ["at", "in", "with", "for"],
+        "answer": 0,
+        "explanation": "'good at' is the standard fixed preposition indicating skill or expertise in a subject.",
+        "rule": "Fixed Preposition: good at",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ap-12",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Fill in the blanks: '_______ Gita is _______ holy book of the Hindus.'",
+        "options": ["The, a", "A, a", "The, the", "An, a"],
+        "answer": 0,
+        "explanation": "Sacred/Holy books take the definite article 'The' -> 'The Gita is a holy book...'",
+        "rule": "Article with Holy Scriptures",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ap-13",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Choose the correct preposition: 'I prefer reading books _______ watching television.'",
+        "options": ["to", "than", "from", "for"],
+        "answer": 0,
+        "explanation": "The verb 'prefer' takes the preposition 'to', not 'than'.",
+        "rule": "Fixed Preposition: prefer ... to ...",
+        "difficulty": "Medium"
+      },
+      {
+        "id": "g-ap-14",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Fill in the blank: 'The train arrived _______ the platform exactly at 6:00 PM.'",
+        "options": ["at", "in", "on", "into"],
+        "answer": 0,
+        "explanation": "'arrive at' is used for specific points or stations.",
+        "rule": "Preposition of Place: arrive at",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-ap-15",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "mcq",
+        "question": "Choose the correct article: 'He is _______ European scholar who visited Santiniketan.'",
+        "options": ["a", "an", "the", "no article"],
+        "answer": 0,
+        "explanation": "'European' starts with the vowel letter 'E' but begins with the consonant sound 'yu' -> 'a European scholar'.",
+        "rule": "Article before European",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-apdd-1",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "drag_drop",
+        "sentence": "The old woman has no one to look {BLANK} her in her illness.",
+        "options": ["after", "into", "at", "for"],
+        "answer": "after",
+        "explanation": "'look after' means to take care of someone.",
+        "rule": "Phrasal Preposition: look after",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-apdd-2",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "drag_drop",
+        "sentence": "He gave the beggar {BLANK} one-rupee coin as a token of kindness.",
+        "options": ["a", "an", "the", "some"],
+        "answer": "a",
+        "explanation": "'one' begins with the consonant sound 'w' ('wa'), taking indefinite article 'a'.",
+        "rule": "Article with 'one-rupee'",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-apdd-3",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "drag_drop",
+        "sentence": "Always listen attentively {BLANK} what your teachers advise.",
+        "options": ["to", "at", "with", "for"],
+        "answer": "to",
+        "explanation": "The verb 'listen' consistently takes the preposition 'to' -> 'listen to'.",
+        "rule": "Fixed Preposition: listen to",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-apdd-4",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "drag_drop",
+        "sentence": "He has been living in this town {BLANK} ten long years.",
+        "options": ["for", "since", "from", "at"],
+        "answer": "for",
+        "explanation": "'for' denotes duration / period of time.",
+        "rule": "Preposition of Duration: For",
+        "difficulty": "Easy"
+      },
+      {
+        "id": "g-apdd-5",
+        "category": "Grammar: Articles & Prepositions",
+        "type": "drag_drop",
+        "sentence": "The prisoner was accused {BLANK} stealing the gold necklace.",
+        "options": ["of", "for", "with", "by"],
+        "answer": "of",
+        "explanation": "The adjective/participle 'accused' takes the fixed preposition 'of' -> 'accused of'.",
+        "rule": "Fixed Preposition: accused of",
+        "difficulty": "Easy"
+      }
+    ];
+
+    // 2. STATE MANAGEMENT
+    let state = {
+        currentIndex: 0,
+        currentMode: 'all', // 'all', 'flashcard', 'drag_drop'
+        currentCategory: 'All',
+        filteredQuestions: [...QUESTIONS_DATA],
+        userAnswers: {}, // { [questionId]: { chosen: string|number, isCorrect: boolean } }
+        bookmarkedIds: new Set(),
+        incorrectIds: new Set(),
+        streak: 0,
+        soundEnabled: true,
+        speechEnabled: true,
+        theme: 'dark'
+    };
+
+    // 3. ENHANCED WEB AUDIO SYNTHESIZER (100% Offline & Pure Zero-Latency)
+    class SoundEngine {
+        constructor() {
+            this.ctx = null;
+        }
+
+        init() {
+            if (!this.ctx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    this.ctx = new AudioCtx();
+                }
+            }
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+        }
+
+        playChime() {
+            if (!state.soundEnabled) return;
+            this.init();
+            if (!this.ctx) return;
+
+            const now = this.ctx.currentTime;
+            // Harmonic chime: C5 (523.25Hz) -> E5 (659.25Hz) -> G5 (783.99Hz) -> C6 (1046.50Hz)
+            const freqs = [523.25, 659.25, 783.99, 1046.50];
+            freqs.forEach((freq, i) => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + i * 0.07);
+
+                gain.gain.setValueAtTime(0, now + i * 0.07);
+                gain.gain.linearRampToValueAtTime(0.22, now + i * 0.07 + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.45);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now + i * 0.07);
+                osc.stop(now + i * 0.07 + 0.5);
+            });
+        }
+
+        playBuzzer() {
+            if (!state.soundEnabled) return;
+            this.init();
+            if (!this.ctx) return;
+
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.28);
+
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.32);
+        }
+
+        playFlip() {
+            if (!state.soundEnabled) return;
+            this.init();
+            if (!this.ctx) return;
+
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(800, now + 0.12);
+
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.16);
+        }
+
+        playPickup() {
+            if (!state.soundEnabled) return;
+            this.init();
+            if (!this.ctx) return;
+
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(660, now + 0.08);
+
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.1);
+        }
+
+        playDrop() {
+            if (!state.soundEnabled) return;
+            this.init();
+            if (!this.ctx) return;
+
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(700, now);
+            osc.frequency.exponentialRampToValueAtTime(350, now + 0.1);
+
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.13);
+        }
+
+        playVictoryFanfare() {
+            if (!state.soundEnabled) return;
+            this.init();
+            if (!this.ctx) return;
+
+            const now = this.ctx.currentTime;
+            const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+            notes.forEach((freq, i) => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now + i * 0.12);
+
+                gain.gain.setValueAtTime(0, now + i * 0.12);
+                gain.gain.linearRampToValueAtTime(0.25, now + i * 0.12 + 0.04);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.6);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now + i * 0.12);
+                osc.stop(now + i * 0.12 + 0.65);
+            });
+        }
+    }
+
+    const sound = new SoundEngine();
+
+    // 4. SPEECH SYNTHESIS HELPER (TTS)
+    function speakText(text) {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        const cleanText = text.replace(/[{}]/g, '').replace(/BLANK/g, 'blank');
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'en-GB';
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // 5. CANVAS CONFETTI EFFECT
+    function triggerConfetti() {
+        const canvas = document.getElementById('confettiCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const pieces = [];
+        const colors = ['#6366f1', '#a855f7', '#ec4899', '#22c55e', '#eab308', '#38bdf8'];
+        for (let i = 0; i < 90; i++) {
+            pieces.push({
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                vx: (Math.random() - 0.5) * 16,
+                vy: (Math.random() - 0.7) * 16,
+                size: Math.random() * 8 + 4,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                rotation: Math.random() * 360,
+                rotSpeed: (Math.random() - 0.5) * 10,
+                life: 1
+            });
+        }
+
+        let animationFrame;
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let alive = false;
+
+            pieces.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.35;
+                p.rotation += p.rotSpeed;
+                p.life -= 0.015;
+
+                if (p.life > 0) {
+                    alive = true;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = Math.max(0, p.life);
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                }
+            });
+
+            if (alive) {
+                animationFrame = requestAnimationFrame(animate);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                cancelAnimationFrame(animationFrame);
+            }
+        }
+        animate();
+    }
+
+    // 6. DOM ELEMENTS
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeText = document.getElementById('themeText');
+    const audioToggleBtn = document.getElementById('audioToggleBtn');
+    const audioIcon = document.getElementById('audioIcon');
+    const streakCounter = document.getElementById('streakCounter');
+    const progressBar = document.getElementById('progressBar');
+    const questionIndexBadge = document.getElementById('questionIndexBadge');
+    const categoryPillBadge = document.getElementById('categoryPillBadge');
+    const typeBadge = document.getElementById('typeBadge');
+    const bookmarkBtn = document.getElementById('bookmarkBtn');
+    const readAloudBtn = document.getElementById('readAloudBtn');
+
+    const flashcardView = document.getElementById('flashcardView');
+    const flashcardInner = document.getElementById('flashcardInner');
+    const cardQuestionText = document.getElementById('cardQuestionText');
+    const mcqOptionsGrid = document.getElementById('mcqOptionsGrid');
+    const cardRuleTopic = document.getElementById('cardRuleTopic');
+    const difficultyBadge = document.getElementById('difficultyBadge');
+    const flipToBackBtn = document.getElementById('flipToBackBtn');
+    const flipToFrontBtn = document.getElementById('flipToFrontBtn');
+    const cardBackCorrectAnswer = document.getElementById('cardBackCorrectAnswer');
+    const cardBackExplanation = document.getElementById('cardBackExplanation');
+    const cardBackRuleNotes = document.getElementById('cardBackRuleNotes');
+    const cardBackNextBtn = document.getElementById('cardBackNextBtn');
+
+    const dragDropView = document.getElementById('dragDropView');
+    const dragDropSentence = document.getElementById('dragDropSentence');
+    const draggableChipsContainer = document.getElementById('draggableChipsContainer');
+    const dragDropFeedbackBox = document.getElementById('dragDropFeedbackBox');
+    const ddFeedbackIcon = document.getElementById('ddFeedbackIcon');
+    const ddFeedbackTitle = document.getElementById('ddFeedbackTitle');
+    const ddFeedbackText = document.getElementById('ddFeedbackText');
+    const ddResetBtn = document.getElementById('ddResetBtn');
+    const ddPrevBtn = document.getElementById('ddPrevBtn');
+    const ddNextBtn = document.getElementById('ddNextBtn');
+
+    const prevQuestionBtn = document.getElementById('prevQuestionBtn');
+    const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+    const categoryFiltersContainer = document.getElementById('categoryFiltersContainer');
+
+    // 7. THEME INITIALIZATION & TOGGLE
+    function initTheme() {
+        const savedTheme = localStorage.getItem('wbbse_theme') || 'dark';
+        setTheme(savedTheme);
+    }
+
+    function setTheme(theme) {
+        state.theme = theme;
+        localStorage.setItem('wbbse_theme', theme);
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            themeIcon.textContent = '🌙';
+            themeText.textContent = 'Dark';
+        } else {
+            document.documentElement.classList.remove('dark');
+            themeIcon.textContent = '☀️';
+            themeText.textContent = 'Light';
+        }
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+        const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+        sound.playPickup();
+    });
+
+    // 8. AUDIO TOGGLE
+    audioToggleBtn.addEventListener('click', () => {
+        state.soundEnabled = !state.soundEnabled;
+        audioIcon.textContent = state.soundEnabled ? '🔊' : '🔇';
+        if (state.soundEnabled) sound.playPickup();
+    });
+
+    // 9. CATEGORY FILTERS SETUP
+    function setupCategoryFilters() {
+        const categories = ['All', ...new Set(QUESTIONS_DATA.map(q => q.category))];
+        categoryFiltersContainer.innerHTML = '';
+
+        categories.forEach(cat => {
+            const count = cat === 'All' 
+                ? QUESTIONS_DATA.length 
+                : QUESTIONS_DATA.filter(q => q.category === cat).length;
+
+            const btn = document.createElement('button');
+            btn.className = `category-pill whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
+                cat === state.currentCategory
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400'
+            }`;
+            btn.innerHTML = `${cat} <span class="ml-1 opacity-70">(${count})</span>`;
+
+            btn.addEventListener('click', () => {
+                state.currentCategory = cat;
+                applyFilter();
+                sound.playPickup();
+            });
+
+            categoryFiltersContainer.appendChild(btn);
+        });
+    }
+
+    // 10. FILTER APPLICATION
+    function applyFilter() {
+        let list = [...QUESTIONS_DATA];
+
+        // Filter by category
+        if (state.currentCategory !== 'All') {
+            list = list.filter(q => q.category === state.currentCategory);
+        }
+
+        // Filter by Mode
+        if (state.currentMode === 'flashcard') {
+            list = list.filter(q => q.type === 'mcq');
+        } else if (state.currentMode === 'drag_drop') {
+            list = list.filter(q => q.type === 'drag_drop');
+        }
+
+        state.filteredQuestions = list;
+        state.currentIndex = 0;
+        setupCategoryFilters();
+        renderCurrentQuestion();
+        updateStats();
+    }
+
+    // 11. MODE SWITCHER BUTTONS
+    document.querySelectorAll('.mode-tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.mode-tab-btn').forEach(b => {
+                b.classList.remove('bg-white', 'dark:bg-slate-700', 'text-indigo-600', 'dark:text-indigo-300', 'shadow-sm');
+                b.classList.add('text-slate-600', 'dark:text-slate-300');
+            });
+            e.currentTarget.classList.add('bg-white', 'dark:bg-slate-700', 'text-indigo-600', 'dark:text-indigo-300', 'shadow-sm');
+            e.currentTarget.classList.remove('text-slate-600', 'dark:text-slate-300');
+
+            if (e.currentTarget.id === 'modeAllBtn') state.currentMode = 'all';
+            else if (e.currentTarget.id === 'modeFlashcardBtn') state.currentMode = 'flashcard';
+            else if (e.currentTarget.id === 'modeDragDropBtn') state.currentMode = 'drag_drop';
+
+            applyFilter();
+            sound.playPickup();
+        });
+    });
+
+    // 12. SHUFFLE QUESTIONS
+    document.getElementById('shuffleBtn').addEventListener('click', () => {
+        state.filteredQuestions.sort(() => Math.random() - 0.5);
+        state.currentIndex = 0;
+        renderCurrentQuestion();
+        sound.playFlip();
+    });
+
+    // 13. REVIEW MISTAKES FILTER
+    document.getElementById('filterMistakesBtn').addEventListener('click', () => {
+        if (state.incorrectIds.size === 0) {
+            alert('Great job! No mistakes recorded yet. Keep learning!');
+            return;
+        }
+        state.filteredQuestions = QUESTIONS_DATA.filter(q => state.incorrectIds.has(q.id));
+        state.currentIndex = 0;
+        renderCurrentQuestion();
+        sound.playPickup();
+    });
+
+    // 14. RESET SESSION
+    document.getElementById('resetSessionBtn').addEventListener('click', () => {
+        if (confirm('Do you want to reset your scores, answered questions, and streak?')) {
+            state.userAnswers = {};
+            state.incorrectIds.clear();
+            state.streak = 0;
+            streakCounter.textContent = '0';
+            applyFilter();
+            sound.playPickup();
+        }
+    });
+
+    // 15. QUESTION RENDERING ENGINE
+    function renderCurrentQuestion() {
+        if (state.filteredQuestions.length === 0) {
+            cardQuestionText.textContent = 'No questions match the current filter.';
+            return;
+        }
+
+        const q = state.filteredQuestions[state.currentIndex];
+
+        // Update Header badges & progress bar
+        const total = state.filteredQuestions.length;
+        const currentNum = state.currentIndex + 1;
+        questionIndexBadge.textContent = `Question ${currentNum} of ${total}`;
+        categoryPillBadge.textContent = q.category;
+        typeBadge.textContent = q.type === 'mcq' ? 'MCQ Flashcard' : 'Drag & Drop Slot';
+
+        const progressPercent = Math.round((currentNum / total) * 100);
+        progressBar.style.width = `${progressPercent}%`;
+
+        // Update Bookmark state
+        bookmarkBtn.textContent = state.bookmarkedIds.has(q.id) ? '⭐' : '☆';
+        bookmarkBtn.title = state.bookmarkedIds.has(q.id) ? 'Remove Bookmark' : 'Bookmark this Question';
+
+        // Reset flip state
+        flashcardInner.classList.remove('flipped');
+
+        if (q.type === 'mcq') {
+            // SHOW FLASHCARD VIEW
+            flashcardView.classList.remove('hidden');
+            dragDropView.classList.add('hidden');
+
+            cardQuestionText.textContent = q.question;
+            cardRuleTopic.textContent = q.rule || q.category;
+            difficultyBadge.textContent = q.difficulty || 'Standard';
+
+            // Back of Card Info
+            const correctOptText = q.options[q.answer];
+            cardBackCorrectAnswer.textContent = `${String.fromCharCode(65 + q.answer)}. ${correctOptText}`;
+            cardBackExplanation.textContent = q.explanation;
+            cardBackRuleNotes.textContent = `Exam Concept: ${q.rule || 'Follow standard WBBSE English syllabus guidelines.'}`;
+
+            // Render 4 Options
+            mcqOptionsGrid.innerHTML = '';
+            const existingAnswer = state.userAnswers[q.id];
+
+            q.options.forEach((opt, idx) => {
+                const optBtn = document.createElement('button');
+                const letter = String.fromCharCode(65 + idx);
+                optBtn.className = `option-btn w-full p-4 rounded-2xl border text-left flex items-center justify-between transition-all duration-200 font-medium text-sm sm:text-base ${
+                    existingAnswer
+                        ? idx === q.answer
+                            ? 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold'
+                            : existingAnswer.chosen === idx
+                                ? 'bg-rose-500/15 border-rose-500 text-rose-700 dark:text-rose-300 animate-shake'
+                                : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-400 opacity-60'
+                        : 'bg-slate-50 hover:bg-indigo-50/70 dark:bg-slate-800/50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-sm'
+                }`;
+
+                optBtn.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold ${
+                            existingAnswer && idx === q.answer
+                                ? 'bg-emerald-500 text-white'
+                                : existingAnswer && existingAnswer.chosen === idx
+                                    ? 'bg-rose-500 text-white'
+                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                        }">${letter}</span>
+                        <span>${opt}</span>
+                    </div>
+                    ${
+                        existingAnswer && idx === q.answer
+                            ? '<span class="text-emerald-500 text-base">✓</span>'
+                            : existingAnswer && existingAnswer.chosen === idx
+                                ? '<span class="text-rose-500 text-base">✗</span>'
+                                : ''
+                    }
+                `;
+
+                if (!existingAnswer) {
+                    optBtn.addEventListener('click', () => handleMCQAnswer(q, idx));
+                }
+
+                mcqOptionsGrid.appendChild(optBtn);
+            });
+
+        } else if (q.type === 'drag_drop') {
+            // SHOW DRAG & DROP VIEW
+            flashcardView.classList.add('hidden');
+            dragDropView.classList.remove('hidden');
+
+            renderDragDropQuestion(q);
+        }
+    }
+
+    // 16. HANDLE MCQ SELECTION
+    function handleMCQAnswer(question, chosenIndex) {
+        const isCorrect = (chosenIndex === question.answer);
+        state.userAnswers[question.id] = { chosen: chosenIndex, isCorrect };
+
+        if (isCorrect) {
+            state.streak++;
+            state.incorrectIds.delete(question.id);
+            sound.playChime();
+            if (state.streak > 0 && state.streak % 5 === 0) {
+                triggerConfetti();
+                sound.playVictoryFanfare();
+            }
+        } else {
+            state.streak = 0;
+            state.incorrectIds.add(question.id);
+            sound.playBuzzer();
+        }
+
+        streakCounter.textContent = state.streak;
+        renderCurrentQuestion();
+        updateStats();
+    }
+
+    // 17. DRAG AND DROP RENDER & LOGIC
+    function renderDragDropQuestion(q) {
+        const existingAnswer = state.userAnswers[q.id];
+
+        // Split sentence by {BLANK}
+        const parts = q.sentence.split('{BLANK}');
+        dragDropSentence.innerHTML = `
+            <span>${parts[0]}</span>
+            <div id="dropSlot" class="drop-target-slot inline-flex items-center justify-center min-w-[140px] px-4 py-1.5 mx-1.5 rounded-xl border-2 border-dashed font-bold text-sm sm:text-base ${
+                existingAnswer
+                    ? existingAnswer.isCorrect
+                        ? 'correct-slot'
+                        : 'wrong-slot'
+                    : 'border-indigo-400/80 bg-indigo-50/50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400'
+            }">
+                ${existingAnswer ? existingAnswer.chosen : '🎯 Drop Answer Here'}
+            </div>
+            <span>${parts[1] || ''}</span>
+        `;
+
+        const dropSlot = document.getElementById('dropSlot');
+
+        // Setup HTML5 Drag & Drop Listeners on the Drop Slot
+        if (!existingAnswer) {
+            dropSlot.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                dropSlot.classList.add('drag-over');
+            });
+
+            dropSlot.addEventListener('dragleave', () => {
+                dropSlot.classList.remove('drag-over');
+            });
+
+            dropSlot.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropSlot.classList.remove('drag-over');
+                const droppedWord = e.dataTransfer.getData('text/plain');
+                if (droppedWord) {
+                    handleDragDropSubmit(q, droppedWord);
+                }
+            });
+        }
+
+        // Render 4 Draggable Word Block Chips
+        draggableChipsContainer.innerHTML = '';
+        q.options.forEach((optWord) => {
+            const chip = document.createElement('div');
+            chip.className = `draggable-chip p-3.5 rounded-2xl border text-center font-bold text-sm sm:text-base transition flex items-center justify-center space-x-2 ${
+                existingAnswer && existingAnswer.chosen === optWord
+                    ? existingAnswer.isCorrect
+                        ? 'bg-emerald-500 text-white border-emerald-600 shadow-md'
+                        : 'bg-rose-500 text-white border-rose-600 animate-shake'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-700 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/40 shadow-sm'
+            }`;
+
+            chip.innerHTML = `
+                <span class="text-xs opacity-60">⠿</span>
+                <span>${optWord}</span>
+            `;
+
+            if (!existingAnswer) {
+                chip.setAttribute('draggable', 'true');
+
+                // HTML5 Drag Events
+                chip.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', optWord);
+                    chip.classList.add('dragging');
+                    sound.playPickup();
+                });
+
+                chip.addEventListener('dragend', () => {
+                    chip.classList.remove('dragging');
+                });
+
+                // Tap / Click fallback for touch devices and accessibility
+                chip.addEventListener('click', () => {
+                    handleDragDropSubmit(q, optWord);
+                });
+            }
+
+            draggableChipsContainer.appendChild(chip);
+        });
+
+        // Feedback Box
+        if (existingAnswer) {
+            dragDropFeedbackBox.classList.remove('hidden');
+            if (existingAnswer.isCorrect) {
+                dragDropFeedbackBox.className = 'mt-5 p-4 rounded-2xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-200';
+                ddFeedbackIcon.textContent = '🎉';
+                ddFeedbackTitle.textContent = 'Correct Answer!';
+                ddFeedbackText.textContent = `${q.explanation} (Rule: ${q.rule})`;
+            } else {
+                dragDropFeedbackBox.className = 'mt-5 p-4 rounded-2xl border bg-rose-500/10 border-rose-500/30 text-rose-800 dark:text-rose-200';
+                ddFeedbackIcon.textContent = '⚠️';
+                ddFeedbackTitle.textContent = 'Incorrect!';
+                ddFeedbackText.textContent = `The correct word is "${q.answer}". ${q.explanation}`;
+            }
+        } else {
+            dragDropFeedbackBox.classList.add('hidden');
+        }
+    }
+
+    // 18. PROCESS DRAG AND DROP ANSWER
+    function handleDragDropSubmit(question, chosenWord) {
+        sound.playDrop();
+        const isCorrect = (chosenWord.trim().toLowerCase() === question.answer.trim().toLowerCase());
+        state.userAnswers[question.id] = { chosen: chosenWord, isCorrect };
+
+        if (isCorrect) {
+            state.streak++;
+            state.incorrectIds.delete(question.id);
+            sound.playChime();
+            if (state.streak > 0 && state.streak % 5 === 0) {
+                triggerConfetti();
+                sound.playVictoryFanfare();
+            }
+        } else {
+            state.streak = 0;
+            state.incorrectIds.add(question.id);
+            sound.playBuzzer();
+        }
+
+        streakCounter.textContent = state.streak;
+        renderCurrentQuestion();
+        updateStats();
+    }
+
+    // 19. DRAG & DROP RESET BUTTON
+    ddResetBtn.addEventListener('click', () => {
+        const q = state.filteredQuestions[state.currentIndex];
+        delete state.userAnswers[q.id];
+        renderCurrentQuestion();
+        sound.playPickup();
+    });
+
+    // 20. FLASHCARD FLIP CONTROLS
+    flipToBackBtn.addEventListener('click', () => {
+        flashcardInner.classList.add('flipped');
+        sound.playFlip();
+    });
+
+    flipToFrontBtn.addEventListener('click', () => {
+        flashcardInner.classList.remove('flipped');
+        sound.playFlip();
+    });
+
+    cardBackNextBtn.addEventListener('click', () => {
+        goToNext();
+    });
+
+    // 21. NAVIGATION HANDLERS
+    function goToNext() {
+        if (state.currentIndex < state.filteredQuestions.length - 1) {
+            state.currentIndex++;
+            renderCurrentQuestion();
+            sound.playPickup();
+        } else {
+            sound.playVictoryFanfare();
+            triggerConfetti();
+            alert('🎉 You have reached the end of this question set! Great job mastering WBBSE Class 8 English!');
+        }
+    }
+
+    function goToPrev() {
+        if (state.currentIndex > 0) {
+            state.currentIndex--;
+            renderCurrentQuestion();
+            sound.playPickup();
+        }
+    }
+
+    nextQuestionBtn.addEventListener('click', goToNext);
+    prevQuestionBtn.addEventListener('click', goToPrev);
+    ddNextBtn.addEventListener('click', goToNext);
+    ddPrevBtn.addEventListener('click', goToPrev);
+
+    // 22. BOOKMARK TOGGLE
+    bookmarkBtn.addEventListener('click', () => {
+        const q = state.filteredQuestions[state.currentIndex];
+        if (state.bookmarkedIds.has(q.id)) {
+            state.bookmarkedIds.delete(q.id);
+        } else {
+            state.bookmarkedIds.add(q.id);
+        }
+        renderCurrentQuestion();
+        updateStats();
+        sound.playPickup();
+    });
+
+    // 23. READ ALOUD (TTS)
+    readAloudBtn.addEventListener('click', () => {
+        const q = state.filteredQuestions[state.currentIndex];
+        const textToSpeak = q.type === 'mcq' ? q.question : q.sentence;
+        speakText(textToSpeak);
+    });
+
+    // 24. STATS & ANALYTICS UPDATE
+    function updateStats() {
+        const total = QUESTIONS_DATA.length;
+        const answeredIds = Object.keys(state.userAnswers);
+        const correctCount = answeredIds.filter(id => state.userAnswers[id].isCorrect).length;
+        const accuracy = answeredIds.length > 0 ? Math.round((correctCount / answeredIds.length) * 100) : 0;
+
+        document.getElementById('statTotalQuestions').textContent = total;
+        document.getElementById('statCorrectCount').textContent = correctCount;
+        document.getElementById('statAccuracy').textContent = `${accuracy}%`;
+        document.getElementById('statBookmarkedCount').textContent = state.bookmarkedIds.size;
+        document.getElementById('mistakeBadgeCount').textContent = state.incorrectIds.size;
+
+        // Modal breakdown
+        document.getElementById('modalTotalAnswered').textContent = `${answeredIds.length} / ${total}`;
+        document.getElementById('modalAccuracy').textContent = `${accuracy}%`;
+
+        const breakdownContainer = document.getElementById('categoryStatsBreakdown');
+        breakdownContainer.innerHTML = '';
+        const categories = [...new Set(QUESTIONS_DATA.map(q => q.category))];
+
+        categories.forEach(cat => {
+            const catQuestions = QUESTIONS_DATA.filter(q => q.category === cat);
+            const catAnswered = catQuestions.filter(q => state.userAnswers[q.id]);
+            const catCorrect = catQuestions.filter(q => state.userAnswers[q.id] && state.userAnswers[q.id].isCorrect);
+            const catAcc = catAnswered.length > 0 ? Math.round((catCorrect.length / catAnswered.length) * 100) : 0;
+
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800';
+            row.innerHTML = `
+                <span class="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[200px]">${cat}</span>
+                <span class="font-bold ${catAcc >= 80 ? 'text-emerald-500' : catAcc >= 50 ? 'text-amber-500' : 'text-slate-400'}">${catCorrect.length}/${catQuestions.length} (${catAcc}%)</span>
+            `;
+            breakdownContainer.appendChild(row);
+        });
+    }
+
+    // 25. STATS MODAL TOGGLE
+    const statsModal = document.getElementById('statsModal');
+    document.getElementById('statsModalBtn').addEventListener('click', () => {
+        updateStats();
+        statsModal.classList.remove('hidden');
+        sound.playPickup();
+    });
+    document.getElementById('closeStatsModalBtn').addEventListener('click', () => {
+        statsModal.classList.add('hidden');
+    });
+    document.getElementById('modalCloseBtn2').addEventListener('click', () => {
+        statsModal.classList.add('hidden');
+    });
+
+    // 26. KEYBOARD SHORTCUTS
+    window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        if (e.key === 'ArrowRight') {
+            goToNext();
+        } else if (e.key === 'ArrowLeft') {
+            goToPrev();
+        } else if (e.key === ' ' || e.key === 'Enter') {
+            if (state.filteredQuestions[state.currentIndex]?.type === 'mcq') {
+                e.preventDefault();
+                flashcardInner.classList.toggle('flipped');
+                sound.playFlip();
+            }
+        } else if (['1', '2', '3', '4'].includes(e.key)) {
+            const q = state.filteredQuestions[state.currentIndex];
+            if (q && q.type === 'mcq' && !state.userAnswers[q.id]) {
+                const optIndex = parseInt(e.key) - 1;
+                if (optIndex < q.options.length) {
+                    handleMCQAnswer(q, optIndex);
+                }
+            }
+        } else if (e.key.toLowerCase() === 'm') {
+            audioToggleBtn.click();
+        } else if (e.key.toLowerCase() === 't') {
+            themeToggleBtn.click();
+        }
+    });
+
+    // 27. INITIAL BOOTSTRAP
+    initTheme();
+    setupCategoryFilters();
+    applyFilter();
+    updateStats();
+    </script>
+</body>
+</html>
